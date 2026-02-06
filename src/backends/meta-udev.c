@@ -106,13 +106,6 @@ meta_is_udev_device_disable_modifiers (GUdevDevice *device)
 }
 
 gboolean
-meta_is_udev_device_disable_vrr (GUdevDevice *device)
-{
-  return meta_has_udev_device_tag (device,
-                                   "mutter-device-disable-vrr");
-}
-
-gboolean
 meta_is_udev_device_ignore (GUdevDevice *device)
 {
   return meta_has_udev_device_tag (device, "mutter-device-ignore");
@@ -268,15 +261,11 @@ meta_udev_backlight_find_for_connector (GList      *devices,
       if (g_strcmp0 (prop, "raw") != 0)
         continue;
 
-      parent = g_udev_device_get_parent (device);
-      if (!parent)
-        continue;
-
       /* Raw backlight interfaces registered by the drm driver will have the
        * drm-connector as their parent.
        */
-      prop = g_udev_device_get_subsystem (parent);
-      if (g_strcmp0 (prop, "drm") != 0)
+      parent = g_udev_device_get_parent_with_subsystem (device, "drm", "drm_connector");
+      if (!parent)
         continue;
 
       /* The drm-connector name is in the form `card[n]-[connector-name]`, so

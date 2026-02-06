@@ -59,7 +59,9 @@
 #include "compositor/meta-cullable.h"
 #include "compositor/meta-later-private.h"
 #include "compositor/meta-window-actor-private.h"
+#include "compositor/meta-window-actor-wayland.h"
 #include "compositor/meta-window-group-private.h"
+#include "core/startup-notification-private.h"
 #include "core/util-private.h"
 #include "core/window-private.h"
 #include "meta/main.h"
@@ -69,18 +71,11 @@
 #include "meta/meta-context.h"
 #include "meta/prefs.h"
 #include "meta/window.h"
-
-#ifdef HAVE_WAYLAND
-#include "compositor/meta-window-actor-wayland.h"
 #include "wayland/meta-wayland-private.h"
-#endif
 
-#ifdef HAVE_X11_CLIENT
+#ifdef HAVE_XWAYLAND
 #include <X11/extensions/Xcomposite.h>
 
-#include "backends/x11/meta-backend-x11.h"
-#include "backends/x11/meta-event-x11.h"
-#include "backends/x11/meta-stage-x11.h"
 
 #include "compositor/meta-window-actor-x11.h"
 
@@ -116,6 +111,7 @@ typedef struct _MetaCompositorPrivate
   int64_t server_time_offset;
 
   gboolean server_time_is_monotonic_time;
+  ClutterCursorType global_cursor;
 
   ClutterActor *window_group;
   ClutterActor *top_window_group;
@@ -346,19 +342,17 @@ meta_compositor_real_add_window (MetaCompositor    *compositor,
 
   switch (window->client_type)
     {
-#ifdef HAVE_X11_CLIENT
+#ifdef HAVE_XWAYLAND
     case META_WINDOW_CLIENT_TYPE_X11:
       window_actor_type = META_TYPE_WINDOW_ACTOR_X11;
       accessible_name = "X11 window";
       break;
 #endif
 
-#ifdef HAVE_WAYLAND
     case META_WINDOW_CLIENT_TYPE_WAYLAND:
       window_actor_type = META_TYPE_WINDOW_ACTOR_WAYLAND;
       accessible_name = "Wayland window";
       break;
-#endif
 
     default:
       g_return_if_reached ();
@@ -446,7 +440,7 @@ meta_compositor_window_shape_changed (MetaCompositor *compositor,
   if (!window_actor)
     return;
 
-#ifdef HAVE_X11_CLIENT
+#ifdef HAVE_XWAYLAND
   meta_window_actor_x11_update_shape (META_WINDOW_ACTOR_X11 (window_actor));
 #endif
 }
@@ -976,16 +970,14 @@ meta_compositor_real_after_paint (MetaCompositor     *compositor,
   MetaCompositorPrivate *priv =
     meta_compositor_get_instance_private (compositor);
   ClutterActor *stage_actor = meta_backend_get_stage (priv->backend);
+  CoglDriver *cogl_driver = cogl_context_get_driver (priv->context);
   CoglGraphicsResetStatus status;
   ClutterStageView *stage_view;
   GList *l;
 
-  status = cogl_context_get_graphics_reset_status (priv->context);
+  status = cogl_driver_get_graphics_reset_status (cogl_driver);
   switch (status)
     {
-    case COGL_GRAPHICS_RESET_STATUS_NO_ERROR:
-      break;
-
     case COGL_GRAPHICS_RESET_STATUS_PURGED_CONTEXT_RESET:
       g_signal_emit_by_name (priv->display, "gl-video-memory-purged");
       g_signal_emit_by_name (stage_actor, "gl-video-memory-purged");
@@ -993,14 +985,7 @@ meta_compositor_real_after_paint (MetaCompositor     *compositor,
       break;
 
     default:
-      /* The ARB_robustness spec says that, on error, the application
-         should destroy the old context and create a new one. Since we
-         don't have the necessary plumbing to do this we'll simply
-         restart the process. Obviously we can't do this when we are
-         a wayland compositor but in that case we shouldn't get here
-         since we don't enable robustness in that case. */
-      g_assert (!meta_is_wayland_compositor ());
-      meta_restart (NULL, meta_display_get_context (priv->display));
+    case COGL_GRAPHICS_RESET_STATUS_NO_ERROR:
       break;
     }
 
@@ -1086,6 +1071,62 @@ on_monitors_changed_internal (MetaMonitorManager *monitor_manager,
                               MetaCompositor     *compositor)
 {
   meta_compositor_ensure_compositor_views (compositor);
+}
+
+static gboolean
+invalidate_cursor_cb (ClutterStage  *stage,
+                      ClutterSprite *sprite,
+                      gpointer       user_data)
+{
+  clutter_sprite_invalidate_cursor (sprite);
+  return TRUE;
+}
+
+static void
+meta_compositor_set_global_cursor (MetaCompositor    *compositor,
+                                   ClutterCursorType  cursor_type)
+{
+  MetaCompositorPrivate *priv =
+    meta_compositor_get_instance_private (compositor);
+  MetaBackend *backend = priv->backend;
+  ClutterStage *stage = CLUTTER_STAGE (meta_backend_get_stage (backend));
+
+  if (priv->global_cursor == cursor_type)
+    return;
+
+  priv->global_cursor = cursor_type;
+  clutter_stage_foreach_sprite (stage, invalidate_cursor_cb, compositor);
+}
+
+static void
+meta_compositor_update_global_cursor (MetaCompositor *compositor)
+{
+  MetaCompositorPrivate *priv =
+    meta_compositor_get_instance_private (compositor);
+  MetaStartupNotification *startup_notification;
+  ClutterCursorType cursor = CLUTTER_CURSOR_INHERIT;
+
+  startup_notification = priv->display->startup_notification;
+
+  if (meta_startup_notification_has_pending_sequences (startup_notification))
+    cursor = CLUTTER_CURSOR_WAIT;
+
+  meta_compositor_set_global_cursor (compositor, cursor);
+}
+
+static void
+on_startup_notification_changed (MetaCompositor *compositor)
+{
+  meta_compositor_update_global_cursor (compositor);
+}
+
+static ClutterCursorType
+on_override_cursor (MetaCompositor *compositor)
+{
+  MetaCompositorPrivate *priv =
+    meta_compositor_get_instance_private (compositor);
+
+  return priv->global_cursor;
 }
 
 static void
@@ -1182,6 +1223,13 @@ meta_compositor_constructed (GObject *object)
   G_OBJECT_CLASS (meta_compositor_parent_class)->constructed (object);
 
   meta_compositor_ensure_compositor_views (compositor);
+
+  g_signal_connect_swapped (priv->display->startup_notification, "changed",
+                            G_CALLBACK (on_startup_notification_changed),
+                            object);
+
+  g_signal_connect_swapped (priv->backend, "override-cursor",
+                            G_CALLBACK (on_override_cursor), object);
 }
 
 static void
@@ -1191,6 +1239,13 @@ meta_compositor_dispose (GObject *object)
   MetaCompositorPrivate *priv =
     meta_compositor_get_instance_private (compositor);
   ClutterActor *stage = meta_backend_get_stage (priv->backend);
+
+  g_signal_handlers_disconnect_by_func (priv->display->startup_notification,
+                                        on_startup_notification_changed,
+                                        object);
+  g_signal_handlers_disconnect_by_func (priv->backend,
+                                        on_override_cursor,
+                                        object);
 
   g_clear_object (&priv->laters);
 
@@ -1614,20 +1669,6 @@ meta_compositor_get_current_window_drag (MetaCompositor *compositor)
     meta_compositor_get_instance_private (compositor);
 
   return priv->current_drag;
-}
-
-gboolean
-meta_compositor_handle_event (MetaCompositor     *compositor,
-                              const ClutterEvent *event,
-                              MetaWindow         *event_window,
-                              MetaEventMode       mode_hint)
-{
-  MetaCompositorClass *klass = META_COMPOSITOR_GET_CLASS (compositor);
-
-  if (!klass->handle_event)
-    return CLUTTER_EVENT_PROPAGATE;
-
-  return klass->handle_event (compositor, event, event_window, mode_hint);
 }
 
 void

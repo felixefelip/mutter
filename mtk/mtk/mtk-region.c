@@ -388,10 +388,13 @@ mtk_region_downscale (MtkRegion *region,
   MtkRectangle *rects;
   MtkRegion *scaled_region;
 
+  n_rects = mtk_region_num_rectangles (region);
+  if (!n_rects)
+    return mtk_region_create ();
+
   if (scale == 1)
     return mtk_region_copy (region);
 
-  n_rects = mtk_region_num_rectangles (region);
   MTK_RECTANGLE_CREATE_ARRAY_SCOPED (n_rects, rects);
   for (i = 0; i < n_rects; i++)
     {

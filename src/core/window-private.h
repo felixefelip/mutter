@@ -608,9 +608,7 @@ struct _MetaWindowClass
 
   MetaStackLayer (*calculate_layer) (MetaWindow *window);
 
-#ifdef HAVE_WAYLAND
   MetaWaylandSurface * (*get_wayland_surface) (MetaWindow *window);
-#endif
 
   gboolean (*set_transient_for) (MetaWindow *window,
                                  MetaWindow *parent);
@@ -704,10 +702,8 @@ gboolean meta_window_can_ping (MetaWindow *window);
 
 MetaStackLayer meta_window_calculate_layer (MetaWindow *window);
 
-#ifdef HAVE_WAYLAND
 META_EXPORT_TEST
 MetaWaylandSurface * meta_window_get_wayland_surface (MetaWindow *window);
-#endif
 
 void     meta_window_current_workspace_changed (MetaWindow *window);
 
@@ -815,6 +811,10 @@ void meta_window_move_resize_internal (MetaWindow          *window,
                                        MetaPlaceFlag        place_flags,
                                        MtkRectangle         frame_rect,
                                        MtkRectangle        *result_rect);
+
+void meta_window_move_to_monitor_internal (MetaWindow          *window,
+                                           MetaMoveResizeFlags  flags,
+                                           int                  monitor);
 
 void meta_window_grab_op_began (MetaWindow *window, MetaGrabOp op);
 void meta_window_grab_op_ended (MetaWindow *window, MetaGrabOp op);
@@ -937,3 +937,8 @@ void meta_window_set_tag (MetaWindow *window,
 
 META_EXPORT_TEST
 GPtrArray * meta_window_get_transient_children (MetaWindow *window);
+
+gboolean meta_window_apply_external_constraints (MetaWindow                  *window,
+                                                 MetaGravity                  resize_gravity,
+                                                 MtkRectangle                *constrained_rect,
+                                                 MetaExternalConstraintFlags  constraint_flags);

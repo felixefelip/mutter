@@ -26,6 +26,9 @@ typedef enum _MetaKmsCrtcProp
 {
   META_KMS_CRTC_PROP_MODE_ID = 0,
   META_KMS_CRTC_PROP_ACTIVE,
+  META_KMS_CRTC_PROP_DEGAMMA_LUT,
+  META_KMS_CRTC_PROP_DEGAMMA_LUT_SIZE,
+  META_KMS_CRTC_PROP_CTM,
   META_KMS_CRTC_PROP_GAMMA_LUT,
   META_KMS_CRTC_PROP_GAMMA_LUT_SIZE,
   META_KMS_CRTC_PROP_VRR_ENABLED,
@@ -55,6 +58,7 @@ uint64_t meta_kms_crtc_get_prop_drm_value (MetaKmsCrtc     *crtc,
                                            uint64_t         value);
 
 gboolean meta_kms_crtc_determine_deadline (MetaKmsCrtc  *crtc,
+                                           int64_t       target_presentation_time_us,
                                            int64_t      *out_next_deadline_us,
                                            int64_t      *out_next_presentation_us,
                                            GError      **error);

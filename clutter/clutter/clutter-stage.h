@@ -123,16 +123,13 @@ struct _ClutterFrameInfo
   int64_t global_frame_counter;
   int64_t view_frame_counter;
   int64_t presentation_time; /* microseconds; CLOCK_MONOTONIC */
-  int64_t target_presentation_time; /* microseconds; CLOCK_MONOTONIC */
   float refresh_rate;
 
   ClutterFrameInfoFlag flags;
 
   unsigned int sequence;
 
-  gboolean has_valid_gpu_rendering_duration;
-  int64_t gpu_rendering_duration_ns;
-  int64_t cpu_time_before_buffer_swap_us;
+  int64_t kms_ready_time_us;
 };
 
 CLUTTER_EXPORT
@@ -215,7 +212,8 @@ ClutterActor * clutter_stage_get_event_actor (ClutterStage       *stage,
 
 CLUTTER_EXPORT
 ClutterGrab * clutter_stage_grab (ClutterStage *stage,
-                                  ClutterActor *actor);
+                                  ClutterActor *actor)
+  G_GNUC_WARN_UNUSED_RESULT;
 
 CLUTTER_EXPORT
 ClutterGrab * clutter_stage_grab_inactive (ClutterStage *stage,
