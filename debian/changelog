@@ -1,3 +1,28 @@
+mutter (50.0-1) experimental; urgency=medium
+
+  * Team upload
+
+  [ Daniel van Vugt ]
+  * New upstream release 50.0
+  * Refresh patches:
+    - workarounds/tests-Skip-thread-priority-test.patch
+  * Bump dependencies:
+    - wayland-protocols >= 1.47
+    - pipewire >= 1.6.0
+  * Update symbols files for 50.0
+
+  [ Simon McVittie ]
+  * Merge packaging from unstable
+  * d/control: Bump dependency versions to those recommended by upstream CI
+    - gsettings-desktop-schemas-dev 50~alpha
+    - libgtk-4-dev 4.22.0
+    - libpipewire-0.3-dev 1.6.1
+  * d/copyright: Update
+  * d/watch: Convert to v5 format
+  * Update Lintian overrides
+
+ -- Simon McVittie <smcv@debian.org>  Sat, 28 Mar 2026 20:50:32 +0000
+
 mutter (50~beta-2) experimental; urgency=medium
 
   * Add loong64 to the list of architectures where sysprof is available
@@ -26,6 +51,14 @@ mutter (50~beta-1) experimental; urgency=medium
   * Bump Standards Version to 4.7.3
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 06 Feb 2026 12:17:46 -0500
+
+mutter (49.4-1) unstable; urgency=medium
+
+  * Team upload
+  * New upstream release
+  * d/libmutter-17-0.symbols: Update
+
+ -- Simon McVittie <smcv@debian.org>  Mon, 16 Feb 2026 20:00:36 +0000
 
 mutter (49.3-1) unstable; urgency=medium
 

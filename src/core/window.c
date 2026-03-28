@@ -228,6 +228,8 @@ enum
   PROP_MAPPED,
   PROP_MAIN_MONITOR,
   PROP_TAG,
+  PROP_A11Y_DBUS_NAME,
+  PROP_A11Y_OBJECT_PATH,
 
   PROP_LAST,
 };
@@ -406,6 +408,8 @@ meta_window_finalize (GObject *object)
   g_free (window->gtk_window_object_path);
   g_free (window->gtk_app_menu_object_path);
   g_free (window->gtk_menubar_object_path);
+  g_free (window->a11y_dbus_name);
+  g_free (window->a11y_object_path);
   g_free (window->placement.rule);
   g_free (window->tag);
 
@@ -517,6 +521,12 @@ meta_window_get_property (GObject         *object,
       break;
     case PROP_TAG:
       g_value_set_string (value, window->tag);
+      break;
+    case PROP_A11Y_DBUS_NAME:
+      g_value_set_string (value, window->a11y_dbus_name);
+      break;
+    case PROP_A11Y_OBJECT_PATH:
+      g_value_set_string (value, window->a11y_object_path);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -696,6 +706,18 @@ meta_window_class_init (MetaWindowClass *klass)
 
   obj_props[PROP_TAG] =
     g_param_spec_string ("tag", NULL, NULL,
+                         NULL,
+                         G_PARAM_READABLE | G_PARAM_EXPLICIT_NOTIFY |
+                         G_PARAM_STATIC_STRINGS);
+
+  obj_props[PROP_A11Y_DBUS_NAME] =
+    g_param_spec_string ("a11y-dbus-name", NULL, NULL,
+                         NULL,
+                         G_PARAM_READABLE | G_PARAM_EXPLICIT_NOTIFY |
+                         G_PARAM_STATIC_STRINGS);
+
+  obj_props[PROP_A11Y_OBJECT_PATH] =
+    g_param_spec_string ("a11y-object-path", NULL, NULL,
                          NULL,
                          G_PARAM_READABLE | G_PARAM_EXPLICIT_NOTIFY |
                          G_PARAM_STATIC_STRINGS);
@@ -1505,7 +1527,9 @@ meta_window_unmanage (MetaWindow  *window,
 {
   MetaWindowPrivate *priv = meta_window_get_instance_private (window);
   MetaWorkspaceManager *workspace_manager = window->display->workspace_manager;
+#ifndef G_DISABLE_ASSERT
   GList *tmp;
+#endif
 
   meta_topic (META_DEBUG_WINDOW_STATE, "Unmanaging %s", window->desc);
   window->unmanaging = TRUE;
@@ -1627,7 +1651,7 @@ meta_window_unmanage (MetaWindow  *window,
 
   g_assert (window->workspace == NULL);
 
-#ifndef G_DISABLE_CHECKS
+#ifndef G_DISABLE_ASSERT
   tmp = workspace_manager->workspaces;
   while (tmp != NULL)
     {
@@ -4038,10 +4062,12 @@ meta_window_find_monitor_from_id (MetaWindow *window)
 void
 meta_window_update_for_monitors_changed (MetaWindow *window)
 {
+#ifndef G_DISABLE_ASSERT
   MetaContext *context = meta_display_get_context (window->display);
   MetaBackend *backend = meta_context_get_backend (context);
   MetaMonitorManager *monitor_manager =
     meta_backend_get_monitor_manager (backend);
+#endif
   const MetaLogicalMonitor *old, *new;
 
   if (meta_window_has_fullscreen_monitors (window))
@@ -8801,4 +8827,111 @@ meta_window_apply_external_constraints (MetaWindow                  *window,
     }
 
   return constraint_satisfied;
+}
+
+void
+meta_window_set_a11y_properties (MetaWindow *window,
+                                 const char *a11y_dbus_name,
+                                 const char *toplevel_object_path)
+{
+  if (g_set_str (&window->a11y_dbus_name, a11y_dbus_name))
+    {
+      g_object_notify_by_pspec (G_OBJECT (window),
+                                obj_props[PROP_A11Y_DBUS_NAME]);
+    }
+
+  if (g_set_str (&window->a11y_object_path, toplevel_object_path))
+    {
+      g_object_notify_by_pspec (G_OBJECT (window),
+                                obj_props[PROP_A11Y_OBJECT_PATH]);
+    }
+}
+
+gboolean
+meta_window_get_a11y_properties (MetaWindow  *window,
+                                 const char **a11y_dbus_name,
+                                 const char **toplevel_object_path)
+{
+  if (a11y_dbus_name)
+    *a11y_dbus_name = window->a11y_dbus_name;
+  if (toplevel_object_path)
+    *toplevel_object_path = window->a11y_object_path;
+
+  return window->a11y_dbus_name && window->a11y_object_path;
+}
+
+/**
+ * meta_window_get_min_size:
+ * @window: a #MetaWindow
+ * @width: (out) (optional): location to store the minimum width
+ * @height: (out) (optional): location to store the minimum height
+ *
+ * Gets the minimum size allowed for this window, if set by the client
+ * application, or to 0 if not.
+ *
+ * Returns %TRUE if the minimum size is known.
+ */
+gboolean
+meta_window_get_min_size (MetaWindow *window,
+                          int        *width,
+                          int        *height)
+{
+  g_return_val_if_fail (META_IS_WINDOW (window), FALSE);
+
+  if (window->size_hints.flags & META_SIZE_HINTS_PROGRAM_MIN_SIZE)
+    {
+      if (width)
+        *width = window->size_hints.min_width;
+      if (height)
+        *height = window->size_hints.min_height;
+
+      return TRUE;
+    }
+  else
+    {
+      if (width)
+        *width = 0;
+      if (height)
+        *height = 0;
+
+      return FALSE;
+    }
+}
+
+/**
+ * meta_window_get_max_size:
+ * @window: a #MetaWindow
+ * @width: (out) (optional): location to store the maximum width
+ * @height: (out) (optional): location to store the maximum height
+ *
+ * Gets the maximum size allowed for this window, if set by the client
+ * application, or to 0 if not.
+ *
+ * Returns %TRUE if the maximum size is known.
+ */
+gboolean
+meta_window_get_max_size (MetaWindow *window,
+                          int        *width,
+                          int        *height)
+{
+  g_return_val_if_fail (META_IS_WINDOW (window), FALSE);
+
+  if (window->size_hints.flags & META_SIZE_HINTS_PROGRAM_MAX_SIZE)
+    {
+      if (width)
+        *width = window->size_hints.max_width;
+      if (height)
+        *height = window->size_hints.max_height;
+
+      return TRUE;
+    }
+  else
+    {
+      if (width)
+        *width = 0;
+      if (height)
+        *height = 0;
+
+      return FALSE;
+    }
 }
