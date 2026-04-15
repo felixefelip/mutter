@@ -25,6 +25,7 @@ mutter_pkg_private_deps = [
   lcms2_dep,
   gmodule_no_export_dep,
   gnome_settings_daemon_dep,
+  snapd_support_dep,
   xkbcommon_dep,
   xkbregistry_dep,
   glycin_dep,
