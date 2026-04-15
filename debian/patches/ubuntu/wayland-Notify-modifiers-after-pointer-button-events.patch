@@ -1,0 +1,97 @@
+From: Alessandro Astone <alessandro.astone@canonical.com>
+Date: Wed, 18 Mar 2026 14:43:26 +0100
+Subject: wayland: Notify modifiers after pointer button events
+
+The keyboard modifiers may have changed following a mouse button event,
+such as when a sticky-keys latch is reset by a mouse button release.
+
+Forwarded: https://gitlab.gnome.org/GNOME/mutter/-/merge_requests/4986
+Bug-Ubuntu: https://launchpad.net/bugs/2131889
+---
+ src/wayland/meta-wayland-keyboard.c | 7 +++++++
+ src/wayland/meta-wayland-keyboard.h | 2 ++
+ src/wayland/meta-wayland-pointer.c  | 8 ++++----
+ src/wayland/meta-wayland-seat.c     | 9 +++++++++
+ src/wayland/meta-wayland-seat.h     | 2 ++
+ 5 files changed, 24 insertions(+), 4 deletions(-)
+
+diff --git a/src/wayland/meta-wayland-keyboard.c b/src/wayland/meta-wayland-keyboard.c
+index 8d7849c..339e354 100644
+--- a/src/wayland/meta-wayland-keyboard.c
++++ b/src/wayland/meta-wayland-keyboard.c
+@@ -890,3 +890,10 @@ meta_wayland_keyboard_get_focus_surface (MetaWaylandKeyboard *keyboard)
+ {
+   return keyboard->focus_surface;
+ }
++
++void
++meta_wayland_keyboard_maybe_update_modifiers (MetaWaylandKeyboard *keyboard)
++{
++  if (maybe_update_modifiers_from_keymap (keyboard))
++    notify_modifiers (keyboard);
++}
+diff --git a/src/wayland/meta-wayland-keyboard.h b/src/wayland/meta-wayland-keyboard.h
+index 99a0b5b..0983683 100644
+--- a/src/wayland/meta-wayland-keyboard.h
++++ b/src/wayland/meta-wayland-keyboard.h
+@@ -85,3 +85,5 @@ gboolean meta_wayland_keyboard_can_popup (MetaWaylandKeyboard *keyboard,
+ 
+ META_EXPORT_TEST
+ MetaWaylandSurface * meta_wayland_keyboard_get_focus_surface (MetaWaylandKeyboard *keyboard);
++
++void meta_wayland_keyboard_maybe_update_modifiers (MetaWaylandKeyboard *keyboard);
+diff --git a/src/wayland/meta-wayland-pointer.c b/src/wayland/meta-wayland-pointer.c
+index 8f7b916..6205430 100644
+--- a/src/wayland/meta-wayland-pointer.c
++++ b/src/wayland/meta-wayland-pointer.c
+@@ -756,7 +756,9 @@ handle_button_event (MetaWaylandPointer *pointer,
+                      const ClutterEvent *event)
+ {
+   gboolean implicit_grab;
++  MetaWaylandSeat *seat;
+ 
++  seat = meta_wayland_pointer_get_seat (pointer);
+   implicit_grab = (clutter_event_type (event) == CLUTTER_BUTTON_PRESS) && (count_buttons (event) == 1);
+   if (implicit_grab)
+     {
+@@ -768,11 +770,9 @@ handle_button_event (MetaWaylandPointer *pointer,
+   meta_wayland_pointer_send_button (pointer, event);
+ 
+   if (implicit_grab)
+-    {
+-      MetaWaylandSeat *seat = meta_wayland_pointer_get_seat (pointer);
++    pointer->grab_serial = wl_display_get_serial (seat->wl_display);
+ 
+-      pointer->grab_serial = wl_display_get_serial (seat->wl_display);
+-    }
++  meta_wayland_seat_maybe_update_modifiers (seat);
+ }
+ 
+ static gboolean
+diff --git a/src/wayland/meta-wayland-seat.c b/src/wayland/meta-wayland-seat.c
+index fa6abe3..11db093 100644
+--- a/src/wayland/meta-wayland-seat.c
++++ b/src/wayland/meta-wayland-seat.c
+@@ -726,3 +726,12 @@ meta_wayland_seat_get_cursor (MetaWaylandSeat *seat,
+   else
+     return NULL;
+ }
++
++void
++meta_wayland_seat_maybe_update_modifiers (MetaWaylandSeat *seat)
++{
++  if (!meta_wayland_seat_has_keyboard (seat))
++    return;
++
++  meta_wayland_keyboard_maybe_update_modifiers (seat->keyboard);
++}
+diff --git a/src/wayland/meta-wayland-seat.h b/src/wayland/meta-wayland-seat.h
+index 27bee9f..c238ee8 100644
+--- a/src/wayland/meta-wayland-seat.h
++++ b/src/wayland/meta-wayland-seat.h
+@@ -103,3 +103,5 @@ MetaWaylandSurface * meta_wayland_seat_get_current_surface (MetaWaylandSeat *sea
+ 
+ ClutterCursor * meta_wayland_seat_get_cursor (MetaWaylandSeat *seat,
+                                               ClutterSprite   *sprite);
++
++void meta_wayland_seat_maybe_update_modifiers (MetaWaylandSeat *seat);

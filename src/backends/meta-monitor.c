@@ -959,8 +959,7 @@ meta_monitor_normal_generate_modes (MetaMonitorNormal *monitor_normal)
         meta_crtc_mode_get_info (crtc_mode);
       MetaCrtc *crtc;
       g_autoptr (MetaMonitorMode) mode = NULL;
-      MetaMonitorModePrivate *mode_priv =
-        meta_monitor_mode_get_instance_private (mode);
+      MetaMonitorModePrivate *mode_priv;
       gboolean replace;
 
       mode = g_object_new (META_TYPE_MONITOR_MODE, NULL);
@@ -1701,8 +1700,6 @@ find_best_mode (MetaMonitor *monitor)
   MetaMonitorPrivate *monitor_priv =
     meta_monitor_get_instance_private (monitor);
   MetaMonitorMode *best_mode = NULL;
-  MetaCrtcRefreshRateMode best_refresh_rate_mode;
-  float best_refresh_rate;
   GList *l;
 
   for (l = monitor_priv->modes; l; l = l->next)
@@ -1712,6 +1709,8 @@ find_best_mode (MetaMonitor *monitor)
         meta_monitor_mode_get_instance_private (mode);
       int best_width, best_height;
       int area, best_area;
+      float best_refresh_rate;
+      MetaCrtcRefreshRateMode best_refresh_rate_mode;
 
       if (!best_mode)
         {
@@ -1725,28 +1724,21 @@ find_best_mode (MetaMonitor *monitor)
       if (area > best_area)
         {
           best_mode = mode;
-          best_refresh_rate = meta_monitor_mode_get_refresh_rate (mode);
-          best_refresh_rate_mode =
-            meta_monitor_mode_get_refresh_rate_mode (mode);
           continue;
         }
 
+      best_refresh_rate = meta_monitor_mode_get_refresh_rate (best_mode);
       if (mode_priv->spec.refresh_rate > best_refresh_rate)
         {
           best_mode = mode;
-          best_refresh_rate = meta_monitor_mode_get_refresh_rate (mode);
-          best_refresh_rate_mode =
-            meta_monitor_mode_get_refresh_rate_mode (mode);
           continue;
         }
 
+      best_refresh_rate_mode = meta_monitor_mode_get_refresh_rate_mode (best_mode);
       if (mode_priv->spec.refresh_rate == best_refresh_rate &&
           mode_priv->spec.refresh_rate_mode < best_refresh_rate_mode)
         {
           best_mode = mode;
-          best_refresh_rate = meta_monitor_mode_get_refresh_rate (mode);
-          best_refresh_rate_mode =
-            meta_monitor_mode_get_refresh_rate_mode (mode);
           continue;
         }
     }

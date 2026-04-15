@@ -890,3 +890,10 @@ meta_wayland_keyboard_get_focus_surface (MetaWaylandKeyboard *keyboard)
 {
   return keyboard->focus_surface;
 }
+
+void
+meta_wayland_keyboard_maybe_update_modifiers (MetaWaylandKeyboard *keyboard)
+{
+  if (maybe_update_modifiers_from_keymap (keyboard))
+    notify_modifiers (keyboard);
+}

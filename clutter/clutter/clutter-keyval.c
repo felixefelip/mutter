@@ -184,7 +184,7 @@ const char *
 clutter_keyval_name (unsigned int keyval)
 {
   static char buf[100];
-  clutter_key *found;
+  const clutter_key *found;
 
   /* Check for directly encoded 24-bit UCS characters: */
   if ((keyval & 0xff000000) == 0x01000000)
@@ -194,8 +194,8 @@ clutter_keyval_name (unsigned int keyval)
     }
 
   found = bsearch (&keyval, clutter_keys_by_keyval,
-		   CLUTTER_NUM_KEYS, sizeof (clutter_key),
-		   clutter_keys_keyval_compare);
+                   CLUTTER_NUM_KEYS, sizeof (clutter_key),
+                   clutter_keys_keyval_compare);
 
   if (found != NULL)
     {

@@ -1224,6 +1224,7 @@ stacking_tests = [
   'move-to-monitor',
   'keyboard-resize',
   'move-to-smaller-monitor',
+  'move-to-monitor-minimized',
 ]
 
 foreach stacking_test: stacking_tests

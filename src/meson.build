@@ -25,6 +25,7 @@ mutter_pkg_private_deps = [
   lcms2_dep,
   gmodule_no_export_dep,
   gnome_settings_daemon_dep,
+  snapd_support_dep,
   xkbcommon_dep,
   xkbregistry_dep,
   glycin_dep,
@@ -1232,7 +1233,8 @@ if have_introspection
     sources: [
       mutter_enum_types[1],
       mutter_introspected_sources,
-      mutter_public_header_files
+      mutter_public_header_files,
+      'core' / 'meta-private-introspected.h',
     ],
     nsversion: libmutter_api_version,
     namespace: 'Meta',

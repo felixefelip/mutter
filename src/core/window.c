@@ -65,6 +65,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef HAVE_SNAPD_SUPPORT
+#include <libsoup/soup.h>
+#include <json-glib/json-glib.h>
+#endif
+
 #include "backends/meta-backend-private.h"
 #include "backends/meta-logical-monitor-private.h"
 #include "cogl/cogl.h"
@@ -72,6 +77,7 @@
 #include "core/boxes-private.h"
 #include "core/constraints.h"
 #include "core/keybindings-private.h"
+#include "core/meta-private-introspected.h"
 #include "core/meta-window-config-private.h"
 #include "core/meta-workspace-manager-private.h"
 #include "core/place.h"
@@ -988,16 +994,229 @@ meta_window_update_flatpak_id (MetaWindow *window,
   return TRUE;
 }
 
+#ifdef HAVE_SNAPD_SUPPORT
+static SoupMessage *
+make_snapd_message (const gchar *method, const gchar *path)
+{
+  g_autofree gchar *uri = NULL;
+  SoupMessage *msg;
+  SoupMessageHeaders *request_headers;
+
+  uri = g_strconcat ("http://localhost", path, NULL);
+  msg = soup_message_new (method, uri);
+  request_headers = soup_message_get_request_headers (msg);
+
+  /* Disallow authentication via polkit. */
+  soup_message_headers_append (request_headers, "X-Allow-Interaction", "false");
+
+  return msg;
+}
+
+static JsonObject *
+process_snapd_response_body (SoupMessage   *msg,
+                             GBytes        *body,
+                             GError      **error)
+{
+  const gchar *content_type;
+  g_autoptr(JsonParser) parser = NULL;
+  const gchar *body_data;
+  size_t body_length;
+  JsonNode *root;
+  JsonObject *response;
+  gint64 status_code;
+  g_autoptr(GError) internal_error = NULL;
+
+  content_type = soup_message_headers_get_one (
+    soup_message_get_response_headers (msg), "Content-Type");
+  if (g_strcmp0 (content_type, "application/json") != 0)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Invalid content type %s returned", content_type);
+      return NULL;
+    }
+
+  parser = json_parser_new ();
+  body_data = g_bytes_get_data (body, &body_length);
+  if (!json_parser_load_from_data (parser, body_data, body_length, &internal_error))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Failed to decode JSON content: %s", internal_error->message);
+      return NULL;
+    }
+
+  root = json_parser_get_root (parser);
+  if (!JSON_NODE_HOLDS_OBJECT (root))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Returned JSON not an object");
+      return NULL;
+    }
+
+  response = json_node_get_object (root);
+  status_code = json_object_get_int_member (response, "status-code");
+  if (status_code != SOUP_STATUS_OK && status_code != SOUP_STATUS_ACCEPTED)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Invalid status code %"
+                   G_GINT64_FORMAT, status_code);
+      return NULL;
+    }
+
+  return json_object_ref (response);
+}
+
+typedef struct {
+  GMainLoop *loop;
+  GBytes *response_body;
+  GError **error;
+} SendMessageData;
+
+static void
+on_send_message_finished (GObject *source_object,
+                          GAsyncResult *res,
+                          gpointer user_data)
+{
+  SendMessageData *data = user_data;
+  SoupSession *session = SOUP_SESSION (source_object);
+
+  data->response_body = soup_session_send_and_read_finish (session, res,
+                                                           data->error);
+  g_main_loop_quit (data->loop);
+}
+
+static JsonObject *
+call_snapd_sync (SoupSession  *session,
+                 const char   *method,
+                 const char   *path,
+                 GError      **error)
+{
+  g_autoptr(GMainLoop) loop = g_main_loop_new (NULL, FALSE);
+  g_autoptr(GCancellable) cancellable = g_cancellable_new ();
+  g_autoptr(GBytes) response_body = NULL;
+  g_autoptr(SoupMessage) msg = NULL;
+  SendMessageData send_message_data = { .loop = loop, .error = error };
+  guint timeout_id;
+
+  msg = make_snapd_message (method, path);
+
+  /* We really do not want to block here and we should but if we do, let's
+   * not hang fully.
+   */
+  timeout_id =
+    g_timeout_add_once (25, (GSourceOnceFunc) g_cancellable_cancel, cancellable);
+
+  soup_session_send_and_read_async (session, msg, G_PRIORITY_HIGH,
+                                    cancellable, on_send_message_finished,
+                                    &send_message_data);
+  g_main_loop_run (loop);
+
+  if (!g_cancellable_is_cancelled (cancellable))
+    g_clear_handle_id (&timeout_id, g_source_remove);
+
+  if (!(response_body = g_steal_pointer (&send_message_data.response_body)))
+    return NULL;
+
+  return process_snapd_response_body (msg, response_body, error);
+}
+
+static JsonObject *
+snapd_client_get_snap_sync (SoupSession  *session,
+                            const char   *name,
+                            GError      **error)
+{
+  g_autofree gchar *path = NULL;
+  g_autoptr(JsonObject) response = NULL;
+  JsonObject *result;
+
+  path = g_strconcat ("/v2/snaps/", name, NULL);
+  response = call_snapd_sync (session, "GET", path, error);
+  if (response == NULL)
+    return NULL;
+  result = json_object_get_object_member (response, "result");
+
+  if (result == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Invalid response to %s", path);
+      return NULL;
+    }
+
+  return json_object_ref (result);
+}
+
+static char *
+snapd_get_application_app_id_sync (MetaDisplay  *display,
+                                   const gchar  *snap_name,
+                                   const gchar  *app_name,
+                                   GError      **error)
+{
+  g_autoptr (JsonObject) snap = NULL;
+  JsonNode *apps_node;
+
+  if (!(snap = snapd_client_get_snap_sync (display->snapd_session,
+                                           snap_name, error)))
+      return NULL;
+
+  apps_node = json_object_get_member (snap, "apps");
+  if (!apps_node || !JSON_NODE_HOLDS_ARRAY (apps_node))
+    {
+      g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                           "Failed parsing returned JSON");
+      return NULL;
+    }
+
+  JsonArray *apps_array = json_node_get_array (apps_node);
+  guint n_apps = json_array_get_length (apps_array);
+
+  for (guint i = 0; i < n_apps; ++i)
+    {
+      g_autofree char *app_id = NULL;
+      JsonNode *app_node;
+      JsonObject *app;
+      const char *name;
+      const char *desktop_file;
+      char *dot;
+
+      app_node = json_array_get_element (apps_array, i);
+      if (!JSON_NODE_HOLDS_OBJECT (app_node))
+        {
+          g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                               "Failed parsing returned JSON");
+          return NULL;
+        }
+
+      app = json_node_get_object (app_node);
+      name = json_object_get_string_member (app, "name");
+      desktop_file = json_object_get_string_member (app, "desktop-file");
+
+      if (!name || !desktop_file)
+        continue;
+
+      if (g_strcmp0 (name, app_name) != 0)
+        continue;
+
+      app_id = g_path_get_basename (desktop_file);
+
+      dot = strrchr (app_id, '.');
+      if (dot)
+        *dot = '\0';
+
+      return g_steal_pointer (&app_id);
+    }
+
+  return NULL;
+}
+
+#endif
+
 static gboolean
 meta_window_update_snap_id (MetaWindow *window,
                             uint32_t    pid)
 {
   g_autofree char *security_label_filename = NULL;
   g_autofree char *security_label_contents = NULL;
-  gsize i, security_label_contents_size = 0;
+  gsize security_label_contents_size = 0;
+  char *c;
   char *contents_start;
   char *contents_end;
-  char *sandboxed_app_id;
+  g_autofree char *sandboxed_app_id = NULL;
 
   g_return_val_if_fail (pid != 0, FALSE);
   g_return_val_if_fail (window->sandboxed_app_id == NULL, FALSE);
@@ -1024,17 +1243,53 @@ meta_window_update_snap_id (MetaWindow *window,
   if (contents_end)
     security_label_contents_size = contents_end - contents_start;
 
-  for (i = 0; i < security_label_contents_size; ++i)
-    {
-      if (contents_start[i] == '.')
-        contents_start[i] = '_';
-    }
-
   sandboxed_app_id = g_malloc0 (security_label_contents_size + 1);
   memcpy (sandboxed_app_id, contents_start, security_label_contents_size);
 
-  window->sandboxed_app_id = sandboxed_app_id;
+#ifdef HAVE_SNAPD_SUPPORT
+  g_autoptr (GError) error = NULL;
+  g_autofree char *app_id = NULL;
+  g_autofree char *snap_name = NULL;
+  char *snap_app;
 
+  snap_name = g_strdup (sandboxed_app_id);
+  snap_app = strchr (snap_name, '.');
+
+  if (!snap_name || !snap_app)
+    return TRUE;
+
+  /* Ideally we could avoid to contact snapd, if a desktop file,
+   * with such but it may still be required to go through it because
+   * a snap may provide a desktop file with a different name even if
+   * the old fallback name (${SNAP}_${APP}) is still generated by snapd.
+   */
+
+  *snap_app = '\0';
+  snap_app++;
+
+  app_id = snapd_get_application_app_id_sync (meta_window_get_display (window),
+                                              snap_name, snap_app, &error);
+
+  if (app_id)
+    {
+      window->sandboxed_app_id = g_steal_pointer (&app_id);
+      return TRUE;
+    }
+
+  if (error)
+    {
+      g_warning ("Failed to get app ID for snap '%s' app '%s': %s at pid %u",
+                 snap_name, snap_app, error->message, pid);
+    }
+#endif
+
+  for (c = sandboxed_app_id; *c; ++c)
+    {
+      if (*c == '.')
+        *c = '_';
+    }
+
+  window->sandboxed_app_id = g_steal_pointer (&sandboxed_app_id);
   return TRUE;
 }
 
@@ -3179,6 +3434,38 @@ meta_window_update_tile_fraction (MetaWindow *window,
     }
 }
 
+G_ALWAYS_INLINE static inline MetaEdgeConstraint
+get_edge_constraint (MetaWindowConstraint constraint)
+{
+  switch (constraint)
+    {
+      case META_WINDOW_CONSTRAINT_NONE:
+        return META_EDGE_CONSTRAINT_NONE;
+      case META_WINDOW_CONSTRAINT_WINDOW:
+        return META_EDGE_CONSTRAINT_WINDOW;
+      case META_WINDOW_CONSTRAINT_MONITOR:
+        return META_EDGE_CONSTRAINT_MONITOR;
+    }
+
+  g_return_val_if_reached (META_WINDOW_CONSTRAINT_NONE);
+}
+
+void
+meta_window_override_constraints (MetaWindow           *window,
+                                  MetaWindowConstraint  top,
+                                  MetaWindowConstraint  left,
+                                  MetaWindowConstraint  right,
+                                  MetaWindowConstraint  bottom)
+{
+  window->overridden_constraints.left = get_edge_constraint (left);
+  window->overridden_constraints.right = get_edge_constraint (right);
+  window->overridden_constraints.top = get_edge_constraint (top);
+  window->overridden_constraints.bottom = get_edge_constraint (bottom);
+
+  update_edge_constraints (window);
+  meta_window_frame_size_changed (window);
+}
+
 static void
 update_edge_constraints (MetaWindow *window)
 {
@@ -3234,6 +3521,18 @@ update_edge_constraints (MetaWindow *window)
       window->edge_constraints.right = META_EDGE_CONSTRAINT_MONITOR;
       window->edge_constraints.left = META_EDGE_CONSTRAINT_MONITOR;
     }
+
+  if (window->overridden_constraints.top != META_EDGE_CONSTRAINT_NONE)
+      window->edge_constraints.top = window->overridden_constraints.top;
+
+  if (window->overridden_constraints.bottom != META_EDGE_CONSTRAINT_NONE)
+      window->edge_constraints.bottom = window->overridden_constraints.bottom;
+
+  if (window->overridden_constraints.left != META_EDGE_CONSTRAINT_NONE)
+      window->edge_constraints.left = window->overridden_constraints.left;
+
+  if (window->overridden_constraints.right != META_EDGE_CONSTRAINT_NONE)
+      window->edge_constraints.right = window->overridden_constraints.right;
 }
 
 gboolean

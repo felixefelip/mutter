@@ -1,3 +1,36 @@
+mutter (50.1-0ubuntu1) resolute; urgency=medium
+
+  [ Daniel van Vugt ]
+  * Merge with Debian version 50.0-1
+  * New stable upstream release 50.1:
+    - Allow setting paint debug flags from environment
+    - Fix applying pango scale attributes to text
+    - Fix moving minimized maximized windows to a different monitor
+    - Configure primary GPU in headless mode if it doesn't support KMS
+    - Use fewer buffers for screencast streams
+    - Only queue clipped redraws when mapped
+    - Fix XReconfigureWMWindow() resizing window when not requested
+    - Fix DND sometimes failing with reused data sources
+    - Fix performance regression with some Nvidia driver versions
+    - Use modifiers for secondary GPU FBOs
+    - Fix freeze with Nvidia driver
+    - Fixed crash
+    - Misc. bug fixes and cleanups
+  * Refresh patches:
+    - workarounds/Mark-several-additional-tests-as-flaky.patch
+    - workarounds/tests-Install-stacking-tests-into-a-subdirectory.patch
+    - ubuntu/window-Use-snapd-socket-to-get-the-application-ID.patch
+  * Drop upstreamed patches included in 50.1:
+    - ubuntu/onscreen-native-Call-assign_next_frame-earlier-in-_swap_b.patch
+    - ubuntu/onscreen-native-Guard-early-swap-bail-behind-render-sourc.patch
+    - ubuntu/onscreen-native-Handle-power-save-mode-later-in-maybe_pos.patch
+    - ubuntu/onscreen-native-Move-nvidia-deadlock-prevention-to-assign.patch
+
+  [ Simon McVittie ]
+  * d/control: Add Breaks on gnome-kiosk (<< 50~rc~)
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Wed, 15 Apr 2026 14:15:35 +0800
+
 mutter (50.0-1) experimental; urgency=medium
 
   * Team upload
@@ -22,6 +55,129 @@ mutter (50.0-1) experimental; urgency=medium
   * Update Lintian overrides
 
  -- Simon McVittie <smcv@debian.org>  Sat, 28 Mar 2026 20:50:32 +0000
+
+mutter (50.0-0ubuntu6) resolute; urgency=medium
+
+  * Move to upstream-approved (and tested) patches for resolving Nvidia
+    freezes and log spam:
+    -ubuntu/onscreen-native-Always-apply-the-deadlock-protection-path.patch
+    -ubuntu/onscreen-native-Ensure-swaps-never-fail.patch
+    +ubuntu/onscreen-native-Handle-power-save-mode-later-in-maybe_pos.patch
+    +ubuntu/onscreen-native-Call-assign_next_frame-earlier-in-_swap_b.patch
+    +ubuntu/onscreen-native-Move-nvidia-deadlock-prevention-to-assign.patch
+    (LP: #2146782, LP: #2147648, LP: #2147480)
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Mon, 13 Apr 2026 16:17:33 +0800
+
+mutter (50.0-0ubuntu5) resolute; urgency=medium
+
+  * Replace: ubuntu/onscreen-native-Ensure-swaps-can-never-fail.patch
+    with these:
+    ubuntu/onscreen-native-Always-apply-the-deadlock-protection-path.patch
+    ubuntu/onscreen-native-Ensure-swaps-never-fail.patch
+    to fix more ways the Nvidia driver can deadlock
+    (LP: #2146782, LP: #2147648)
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Sun, 12 Apr 2026 15:39:28 +0800
+
+mutter (50.0-0ubuntu4) resolute; urgency=medium
+
+  * Add missing dependencies of libmutter-18-dev introduced in
+    50~beta-2ubuntu2: window-Use-snapd-socket-to-get-the-application-ID.patch
+    now causing build failures of other packages (gnome-kiosk) trying to use
+    libmutter-18.pc
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Wed, 08 Apr 2026 15:39:47 +0800
+
+mutter (50.0-0ubuntu3) resolute; urgency=medium
+
+  * Add new patches:
+    - ubuntu/onscreen-native-Guard-early-swap-bail-behind-render-sourc.patch
+    - ubuntu/onscreen-native-Ensure-swaps-can-never-fail.patch (LP: #2146782)
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Sat, 04 Apr 2026 15:03:45 +0800
+
+mutter (50.0-0ubuntu2) resolute; urgency=medium
+
+  * d/p/u: Drop unnecessary pipewire patch
+  * d/p/u: Reset latched sticky-keys modifiers on mouse up (LP: #2131889)
+  * d/p/u/snapd: Fix matching multi-instance snaps
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Tue, 31 Mar 2026 19:38:12 +0200
+
+mutter (50.0-0ubuntu1) resolute; urgency=medium
+
+  * New upstream release 50.0
+  * Refresh patches:
+    - ubuntu/clutter-frame-clock-Don-t-skip-the-next-frame.patch
+    - ubuntu/meson.build-Lower-pipewire-requirement-to-1.5.84.patch
+    - ubuntu/window-Add-ability-to-override-the-edge-constraints.patch
+    - ubuntu/window-Use-snapd-socket-to-get-the-application-ID.patch
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Mon, 16 Mar 2026 16:01:49 +0800
+
+mutter (50~rc-0ubuntu1) resolute; urgency=medium
+
+  [ Simon McVittie ]
+  * Merge packaging from unstable
+
+  [ Daniel van Vugt ]
+  * New upstream release 50.rc (LP: #2143655)
+  * Refresh patches:
+    - workarounds/tests-Skip-thread-priority-test.patch
+    - ubuntu/core-Remove-warning-that-a-key-combo-has-been-overridden.patch
+    - ubuntu/window-Add-ability-to-override-the-edge-constraints.patch
+    - ubuntu/window-Use-snapd-socket-to-get-the-application-ID.patch
+  * Drop upstreamed patches:
+    - Unblock-Nvidia-performance.patch
+  * Replace Revert-clutter-frame-clock-Remove-min_render_time_allowed.patch
+    with clutter-frame-clock-Don-t-skip-the-next-frame.patch
+    to resolve the same bug, but compatible with 50.rc.
+  * Bump dependencies:
+    - wayland-protocols >= 1.47
+    - pipewire >= 1.5.84
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Thu, 05 Mar 2026 16:59:13 +0800
+
+mutter (50~beta-2ubuntu4) resolute; urgency=medium
+
+  * Update Unblock-Nvidia-performance.patch to prevent a busy wait while
+    the monitor is turned off (LP: #2142820)
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Fri, 27 Feb 2026 15:58:48 +0800
+
+mutter (50~beta-2ubuntu3) resolute; urgency=medium
+
+  * d/p/ubuntu/snapd-support: Drop debug code leaked in the patch
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Fri, 20 Feb 2026 04:35:46 +0100
+
+mutter (50~beta-2ubuntu2) resolute; urgency=medium
+
+  [ Alessandro Astone ]
+  * d/p/u: Add proposed patch for sticky-keys:
+    Ensure that a latched modifier will only affect one key press (LP: #2133743)
+
+  [ Marco Trevisan (Treviño) ]
+  * d/p: Improve snap App ID identification.
+    Use the snapd provided information rather than guessing, this is needed
+    to support the desktop-id feature of the desktop interface and to
+    correctly match the applications within the shell context
+  * debian/control: Add build dependency on libsoup (and keep json-glib)
+    The latter should have been actually removed but we need it again now
+    In any case the new dependencies are not really new since the shell
+    already loads in memory libsoup, so this makes just it being loaded by
+    the linker instead.
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Fri, 20 Feb 2026 04:21:18 +0100
+
+mutter (50~beta-2ubuntu1) resolute; urgency=medium
+
+  * Merge with Debian experimental, mostly to get the new dependency of
+    libmutter-18 on mutter-common. This prevents a new crash in 50~beta
+    that would occur when libmutter-18 is used with older mutter-common.
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Mon, 09 Feb 2026 16:36:37 +0800
 
 mutter (50~beta-2) experimental; urgency=medium
 
@@ -52,22 +208,58 @@ mutter (50~beta-1) experimental; urgency=medium
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 06 Feb 2026 12:17:46 -0500
 
-mutter (49.4-1) unstable; urgency=medium
+mutter (50~beta-0ubuntu1) resolute; urgency=medium
 
-  * Team upload
-  * New upstream release
-  * d/libmutter-17-0.symbols: Update
+  * New upstream release 50.beta
+  * Refreshed patches and fixed conflicts:
+    - workarounds/Mark-several-additional-tests-as-flaky.patch
+    - workarounds/tests-Install-stacking-tests-into-a-subdirectory.patch
+    - workarounds/tests-Mark-view-verification-tests-as-incomplete-in-big-e.patch
+    - ubuntu/core-Remove-warning-that-a-key-combo-has-been-overridden.patch
+    - ubuntu/window-Add-ability-to-override-the-edge-constraints.patch
+  * Drop upstreamed patches:
+    - workarounds/tests-test-client-Sync-display-before-closing-it.patch
+    - ubuntu/onscreen-native-Reduce-the-log-level-of-buffer-age-warnin.patch
+  * Rewrote patches:
+    - ubuntu/Unblock-Nvidia-performance.patch
+      because it's likely only part of it will land upstream in 50.0 and
+      the commits had to be reordered. Also fixed a memory leak on DisplayLink.
+  * Added patches:
+    - ubuntu/Revert-clutter-frame-clock-Remove-min_render_time_allowed.patch
+      to avoid a performance regression introduced upstream in 50.beta.
 
- -- Simon McVittie <smcv@debian.org>  Mon, 16 Feb 2026 20:00:36 +0000
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Thu, 05 Feb 2026 16:44:23 +0800
 
-mutter (49.3-1) unstable; urgency=medium
+mutter (50~alpha-0ubuntu1) resolute; urgency=medium
 
-  * New upstream release
-  * d/gbp.conf, d/control, d/watch: Branch for 49.x.
-    The debian/latest branch is already in use for early preparations
-    for v50.
+  * New upstream release 50.alpha (LP: #2131889, LP: #2130619)
+  * Refreshed patches and fixed conflicts:
+    - workarounds/Mark-several-additional-tests-as-flaky.patch
+    - workarounds/tests-Install-stacking-tests-into-a-subdirectory.patch
+    - ubuntu/window-Add-ability-to-override-the-edge-constraints.patch
+  * Add patches:
+    - workarounds/tests-test-client-Sync-display-before-closing-it.patch
+      to avoid spurious test failures with 50.alpha.
+    - ubuntu/Unblock-Nvidia-performance.patch to improve Nvidia driver
+      desktop performance. (LP: #2081140)
+    - ubuntu/core-Remove-warning-that-a-key-combo-has-been-overridden.patch
+      (LP: #1857392)
+    - ubuntu/onscreen-native-Reduce-the-log-level-of-buffer-age-warnin.patch
+      to eliminate spurious log spam introduced in upstream release 50.alpha.
+  * Removed tests that relied strictly on the X11 backend which itself
+    has been removed in this release.
 
- -- Simon McVittie <smcv@debian.org>  Tue, 27 Jan 2026 19:53:34 +0000
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Wed, 21 Jan 2026 16:19:13 +0800
+
+mutter (49.2-1ubuntu1) resolute; urgency=medium
+
+  * Merge with Debian. Remaining changes:
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+  * d/p: Drop Ubuntu patches applied upstream
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Fri, 05 Dec 2025 10:45:29 +0100
 
 mutter (49.2-1) unstable; urgency=medium
 
@@ -77,6 +269,22 @@ mutter (49.2-1) unstable; urgency=medium
   * d/libmutter-17-0.symbols: Update
 
  -- Simon McVittie <smcv@debian.org>  Mon, 24 Nov 2025 17:28:41 +0000
+
+mutter (49.1.1-2ubuntu1) resolute; urgency=medium
+
+  [ Mitchell Augustin ]
+  * backends/monitor-manager: Improve tiled monitor handling (LP: #2131575)
+
+  [ Alessandro Astone ]
+  * Merge with Debian. Remaining changes:
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+    - Add backends-native-Fix-sticky-keys-not-locking.patch (LP #2127039)
+  * d/p: Drop Ubuntu patches applied upstream
+  * d/p: Refresh Ubuntu patches
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Thu, 20 Nov 2025 09:54:37 +0100
 
 mutter (49.1.1-2) unstable; urgency=medium
 
@@ -119,6 +327,57 @@ mutter (49.0-3) experimental; urgency=medium
     with sdl2-compat and ioquake3
 
  -- Simon McVittie <smcv@debian.org>  Fri, 26 Sep 2025 18:35:28 +0100
+
+mutter (49.0-2ubuntu6) resolute; urgency=medium
+
+  * Fix sticky keys not locking (LP: #2127039)
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Wed, 29 Oct 2025 17:51:18 +0100
+
+mutter (49.0-2ubuntu5) questing; urgency=medium
+
+  [ Daniel van Vugt ]
+  * Add patches to resolve handling of modifier keys in the wrong order,
+    in some cases (LP: #2125866, LP: #2125240)
+
+  [ Alessandro Astone ]
+  * Add patch fixing popups freezing near the screen edge (LP: #2125770)
+  * Add patch fixing maximized windows extending under the dock on unlock
+    (LP: #2125581)
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Thu, 02 Oct 2025 10:04:46 +0800
+
+mutter (49.0-2ubuntu4) questing; urgency=medium
+
+  * Add another patch related to LP: #2122579 and refresh the existing one.
+    I'm just finding out now from upstream what actually fixed it because
+    the bug was never tracked properly before the fix landed.
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Thu, 25 Sep 2025 16:52:10 +0800
+
+mutter (49.0-2ubuntu3) questing; urgency=medium
+
+  * Add patches from upstream (to be released in 49.1) fixing common
+    shell crashes:
+    - clutter-gesture-Do-not-crash-on-unknown-events.patch (LP: #2122579)
+    - cursor-renderer-native-Sanity-check-texture-size-before-a.patch &
+      prefs-Fallback-cursor-size-to-24-when-invalid-value-in-se.patch
+      (LP: #2125552)
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Thu, 25 Sep 2025 13:51:58 +0800
+
+mutter (49.0-2ubuntu2) questing; urgency=medium
+
+  * Add clutter-Use-event-type-to-determine-ClutterFocus-to-deliv.patch
+    to ensure the gnome-shell overview gets keyboard focus (LP: #2124255)
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Tue, 23 Sep 2025 14:46:09 +0800
+
+mutter (49.0-2ubuntu1) questing; urgency=medium
+
+  * New upstream release 49.0
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Fri, 19 Sep 2025 12:58:55 +0800
 
 mutter (49.0-2) experimental; urgency=medium
 
@@ -172,6 +431,138 @@ mutter (49~rc-1) experimental; urgency=medium
   * d/source/lintian-overrides: Drop unhandled and outdated line
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 02 Sep 2025 11:17:38 -0400
+
+mutter (49~rc-0ubuntu2) questing; urgency=medium
+
+  * debian/control:
+    - Break on gnome-shell versions prior to 49~rc only
+    - Set version on libglycin-2-dev dependency
+    - Add libglycin-2-dev dependency to libmutter-17-dev
+  * debian/libmutter-17-0.symbols: Drop ubuntu version from symbols file
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 03 Sep 2025 08:04:09 +0200
+
+mutter (49~rc-0ubuntu1) questing; urgency=medium
+
+  [ Daniel van Vugt ]
+  * New upstream release 49.rc (LP: #2079823, LP: #2120628, LP: #2121517)
+  * Added new script 'gnome-service-client' to 'mutter-common'.
+  * Replaced 'libgdk-pixbuf-2.0-dev' dependency with 'libglycin-2-dev'.
+  * Added 'libadwaita-1-dev' dependency for the devkit.
+  * Updated 'libmutter-17-0.symbols' and 'libmutter-test-17.symbols' for 49.rc
+  * Refreshed debian/patches:
+    - workarounds/Mark-several-additional-tests-as-flaky.patch
+    - workarounds/tests-Install-stacking-tests-into-a-subdirectory.patch
+    - workarounds/tests-Mark-view-verification-tests-as-incomplete-in-big-e.patch
+    - ubuntu/window-Add-ability-to-override-the-edge-constraints.patch
+  * Drop upstreamed debian/patches:
+    - ubuntu/clutter-stage-Allow-for-there-being-no-sprite-when-a-devi.patch
+    - ubuntu/core-place-Guarantee-we-never-get-work-area-for-a-NULL-lo.patch
+    - ubuntu/monitor-Calculate-fractional-scaling-factors-using-exact-.patch
+  * Add debian/patches for the current top crasher (LP: #2121195):
+    - ubuntu/clutter-Add-function-clutter_frame_clock_get_frame_count.patch
+    - ubuntu/compositor-Don-t-assume-there-s-an-active-ClutterFrame-du.patch
+  * debian/control: libmutter-17-0 now breaks gnome-shell<<49~rc due to
+    some clutter symbols being removed.
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Tue, 02 Sep 2025 16:14:42 +0800
+
+mutter (49~beta-0ubuntu1) questing; urgency=medium
+
+  [ Daniel van Vugt ]
+  * New upstream release 49.beta
+  * debian/control: Bump dependencies: wayland 1.24, wayland-protocols 1.45
+  * debian/libmutter-17-0.symbols: Update symbols for 49.beta
+  * Drop upstreamed debian/patches:
+    - build-Bump-mutter-API-version.patch
+    - data-Remember-to-give-org.gnome.Mutter.Mdk.desktop-a-main.patch
+  * Refresh debian/patches:
+    - workarounds/Mark-several-additional-tests-as-flaky.patch
+    - workarounds/tests-Install-stacking-tests-into-a-subdirectory.patch
+    - ubuntu/window-Add-ability-to-override-the-edge-constraints.patch
+  * Add debian/patches:
+    - clutter-stage-Allow-for-there-being-no-sprite-when-a-devi.patch
+      (LP: #2119273)
+    - core-place-Guarantee-we-never-get-work-area-for-a-NULL-lo.patch
+      (LP: #2117277)
+    - monitor-Calculate-fractional-scaling-factors-using-exact-.patch
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Tue, 05 Aug 2025 17:28:41 +0800
+
+mutter (49~alpha.1-0ubuntu7) questing; urgency=medium
+
+  * debian/control: mutter-common breaks older versions of libmutter so don't
+    allow it to install prematurely (LP: #2118736)
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Fri, 25 Jul 2025 11:03:00 +0800
+
+mutter (49~alpha.1-0ubuntu6) questing; urgency=medium
+
+  [ Daniel van Vugt ]
+  * debian/control: Restore mutter-17-tests Depends: umockdev
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Fri, 18 Jul 2025 12:41:33 +0800
+
+mutter (49~alpha.1-0ubuntu5) questing; urgency=medium
+
+  [ Daniel van Vugt ]
+  * debian/control: Drop new binary dependency on umockdev. It's very
+    weak (043efbb1831) and an unnecessary blocker being in universe.
+  * debian/libmutter-17-0.lintian-overrides: Fix outdated reference to
+    libmutter-16.
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Thu, 17 Jul 2025 14:46:34 +0800
+
+mutter (49~alpha.1-0ubuntu4) questing; urgency=medium
+
+  [ Marco Trevisan (Treviño) ]
+  * Merge with debian
+  * d/control: Add misisng ${misc:Depends} to mutter-dev-bin
+  * d/source/lintian-overrides: Drop unhandled and outdated line
+  * d/p/ubuntu: Enable window edge constraint override support again
+  * d/control: Add missing mutter-17-tests gio runtime dependencies
+  * d/control: Add new mutter-17-tests umockdev runtime dependency
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Tue, 08 Jul 2025 05:29:42 +0200
+
+mutter (49~alpha.1-0ubuntu3) questing; urgency=medium
+
+  * debian/patches: Mark more tests as flaky for 49.alpha. These issues
+    have been reported upstream.
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Thu, 03 Jul 2025 18:10:10 +0800
+
+mutter (49~alpha.1-0ubuntu2) questing; urgency=medium
+
+  * debian/control: Add umockdev build dep in addition to libumockdev-dev.
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Wed, 02 Jul 2025 18:09:06 +0800
+
+mutter (49~alpha.1-0ubuntu1) questing; urgency=medium
+
+  * New upstream release 49.alpha.1 (LP: #1968901, LP: #2100243, LP: #2102063)
+  * Drop Xorg-specific patches:
+    - clutter-Repick-actors-when-touches-emulate-button-clicks.patch
+    - x11-Add-support-for-fractional-scaling-using-Randr.patch
+  * Drop upstreamed patches:
+    - wayland-xdg-shell-Check-popup-resource-for-parent-unmappe.patch
+    - wayland-xdg-shell-Check-for-NULL-xdg_popup-resource.patch
+    - cursor-drag-and-drop.patch
+    - cursor-sprite-xcursor-Reset-current_frame-only-if-xcursor.patch
+    - Use-access-instead-of-checking-permission-modes-for-tmp-..patch
+  * Refresh patches:
+    - tests-Do-not-run-screencast-tests.patch
+    - Mark-several-additional-tests-as-flaky.patch
+    - tests-Install-stacking-tests-into-a-subdirectory.patch
+  * Disable patch: window-Add-ability-to-override-the-edge-constraints.patch
+    because it doesn't apply anymore and its existence not fully explained.
+    It can't be Ubuntu-specific if in support of Tiling Assistant which is
+    not Ubuntu-specific. Needs to be proposed upstream if required at all.
+  * Added new binary package 'mutter-dev-bin' for the missing 'mutter-devkit'
+    binary. Four years late.
+  * Bump the Mutter API/ABI to 17.
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Wed, 02 Jul 2025 17:41:53 +0800
 
 mutter (48.5-1) unstable; urgency=medium
 
@@ -264,99 +655,43 @@ mutter (48.4-1) experimental; urgency=medium
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Thu, 03 Jul 2025 08:48:17 -0400
 
-mutter (48.3.1-2) unstable; urgency=medium
+mutter (48.1-1ubuntu4) questing; urgency=medium
 
-  * Team upload
-  * Add a detailed list of changes to the previous changelog entry
-  * Upload to unstable
+  [ Carlos Garnacho ]
+  * d/p/u/cursor-drag-and-drop.patch: Fixes cursor stuck in incorrect state
+    after attempt to drag and drop text inside the application's window.
+    https://bugzilla.mozilla.org/show_bug.cgi?id=1699942
 
- -- Simon McVittie <smcv@debian.org>  Sat, 14 Jun 2025 10:07:10 +0100
+ -- Nathan Pratta Teodosio <nteodosio@ubuntu.com>  Thu, 22 May 2025 10:55:41 +0200
 
-mutter (48.3.1-1) experimental; urgency=medium
+mutter (48.1-1ubuntu3) plucky; urgency=medium
 
-  * New upstream bugfix release
-    - Improve performance of use-cases like fullscreen video playback
-      on older GPUs such as the one in the Pinebook Pro, by substituting
-      opaque dmabuf formats for their equivalents with alpha, such as
-      XRGB for ARGB (mutter#2471 upstream)
-    - Allocate the correct height for members of a vertical layout by
-      updating size request mode when changing orientation
-      (mutter!4339 upstream)
-    - Only check for xkbfile when supporting X11
-      (no practical effect on Debian, where we do support X11)
-      (mutter!4409 upstream)
-    - Fix several memory leaks, while ensuring objects are still destroyed
-      in the correct order
-      (mutter!4432 upstream)
-    - Don't log a warning when files are removed from the ICC profile
-      directory, fixing one source of flaky automated tests
-      (mutter!4431 upstream)
-    - Don't take control of logind session when running on Xorg, fixing the
-      tty being left in an inconsistent state if mutter is killed
-      (mutter!4391 upstream)
-    - Fix gdctl crash when communicating with Xorg sessions
-      (mutter#4023 upstream)
-    - Avoid unexpectedly low framerate when moving/resizing windows after
-      session locking or after heavy system load
-      (mutter#4029 upstream)
-    - Fix drag and drop of tabs into tiled/maximized state
-      (mutter!4468 upstream)
-    - Fix Xwayland windows becoming unresponsive to events
-      (mutter!4475 upstream)
-    - Use frame-sync candidate that likely matches scanout candidate, making
-      variable refresh rate work better
-      (mutter!4412 upstream)
-    - Add an early-return from build_and_scan_frame_mask() for zero-sized
-      textures, possibly fixing one source of flaky automated tests
-      (mutter!4039 upstream)
-    - Avoid leaking the session manager file's file descriptor down to
-      apps launched by gnome-shell
-      (gnome-shell#8345, mutter!4405 upstream)
-    - Restore tiled/maximized windows to the correct monitor
-      (mutter#3939 upstream)
-    - Let the compositor control drag-and-drop cursor feedback for native
-      Wayland
-      (mutter!4390 upstream)
-      - Related issue mutter#4033 upstream, mainly affecting older GTK
-        versions like those in outdated Flatpak and Snap runtimes, is not
-        fixed here; see mutter!4433 upstream for a possible solution
-    - Propagate all touchpad gesture events to apps
-      (mutter#3505 upstream)
-    - Fix a race condition when registering an implict grab
-      (mutter#4055 upstream)
-    - Fix Wine games failing to enter fullscreen across multiple monitors
-      (mutter!4389 upstream)
-    - Update window decorations on override-redirect attribute change
-      (mutter!4287 upstream)
-    - In the test suite, fall back to a reasonable pipewire socket name on
-      non-systemd systems
-      (mutter#4044 upstream)
-    - Translation updates: be, sk
-
- -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 06 Jun 2025 13:51:45 -0400
-
-mutter (48.2-1) unstable; urgency=medium
-
-  * New upstream release
-  * Remove 3 patches applied in new release
-
- -- Jeremy Bícha <jbicha@ubuntu.com>  Thu, 17 Apr 2025 13:30:10 -0400
-
-mutter (48.1-2) unstable; urgency=medium
-
-  [ Daniel van Vugt ]
-  * Cherry-pick cursor-sprite-xcursor-Reset-current_frame-only-if-xcursor.patch
-    to fix animated cursors (LP: #2106097)
-  * Cherry-pick wayland-xdg-shell-Check-for-NULL-xdg_popup-resource.patch
-    and wayland-xdg-shell-Check-popup-resource-for-parent-unmappe.patch to fix
+  * Add wayland-xdg-shell-Check-for-NULL-xdg_popup-resource.patch and
+    wayland-xdg-shell-Check-popup-resource-for-parent-unmappe.patch to fix
     popup crashes (LP: #2043177)
 
-  [ Michael Biebl ]
-  * Enable fractional scaling by default as was done in Fedora 41
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Wed, 09 Apr 2025 13:47:27 +0800
 
- -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 11 Apr 2025 14:29:16 -0400
+mutter (48.1-1ubuntu2) plucky; urgency=medium
 
-mutter (48.1-1) unstable; urgency=medium
+  * Add cursor-sprite-xcursor-Reset-current_frame-only-if-xcursor.patch
+    to fix animated cursors (LP: #2106097)
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Thu, 03 Apr 2025 16:35:31 +0800
+
+mutter (48.1-1ubuntu1) plucky; urgency=medium
+
+  * Merge with Debian (unreleased) 48.1-1.
+  * Updated x11-Add-support-for-fractional-scaling-using-Randr.patch:
+    - Fixed conflicts with 48.1
+    - Fixed memory-use-after-free in meta_monitor_manager_ensure_configured
+      that manifested as test failures in mutter-cursor-tests.
+  * Drop seat-impl-Initialize-the-impl-reverse-pointer-slightly-ea.patch
+    because 48.1 fixes the same bug in a different way.
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Wed, 02 Apr 2025 15:58:12 +0800
+
+mutter (48.1-1) UNRELEASED; urgency=medium
 
   * New upstream release 48.1
     (fixes LP: #2104183, LP: #2103886, LP: #2103983, LP: #2099658)
@@ -372,6 +707,23 @@ mutter (48.1-1) unstable; urgency=medium
   * debian: Split man pages into the packages that contain the binaries
 
  -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Wed, 02 Apr 2025 13:28:46 +0800
+
+mutter (48.0-1ubuntu1) plucky; urgency=medium
+
+  * Merge with Debian. Remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+    - Add seat-impl-Initialize-the-impl-reverse-pointer-slightly-ea.patch
+      to avoid crashing when mousekeys or keyboard a11y features are
+      enabled
+    - Add Use-access-instead-of-checking-permission-modes-for-tmp-..patch
+      to fix access check for X11_TMP_UNIX_DIR
+    - Add tests-Mark-wayland-unit-as-flaky.patch to avoid spurious Launchpad
+      build failures
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 21 Mar 2025 09:07:14 -0400
 
 mutter (48.0-1) unstable; urgency=medium
 
@@ -413,6 +765,26 @@ mutter (48.0-1) unstable; urgency=medium
 
  -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Thu, 20 Mar 2025 17:00:31 +0800
 
+mutter (48~rc-4ubuntu2) plucky; urgency=medium
+
+  * Refresh seat-impl-Initialize-the-impl-reverse-pointer-slightly-ea.patch
+  * Add tests-Mark-wayland-unit-as-flaky.patch to avoid spurious Launchpad
+    build failures that blocked the previous 48~rc-ubuntu tags.
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Fri, 14 Mar 2025 17:52:01 +0800
+
+mutter (48~rc-4ubuntu1) plucky; urgency=medium
+
+  [ Nathan Pratta Teodosio ]
+  * Update d/libmutter-1{5->6}-0.lintian-overrides.
+
+  [ Daniel van Vugt ]
+  * Merge with Debian 48~rc-4
+  * Merge up to 968dae3916 to resolve touchscreen problems on X11
+    (LP: #2063005, LP: #1904237)
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Wed, 12 Mar 2025 17:14:05 +0800
+
 mutter (48~rc-4) unstable; urgency=medium
 
   * Team upload
@@ -432,6 +804,21 @@ mutter (48~rc-3) experimental; urgency=medium
     display freezes (Closes: #1099743, hopefully)
 
  -- Simon McVittie <smcv@debian.org>  Sun, 09 Mar 2025 16:56:14 +0000
+
+mutter (48~rc-2ubuntu1) plucky; urgency=medium
+
+  * Merge with Debian. Remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+    - Add seat-impl-Initialize-the-impl-reverse-pointer-slightly-ea.patch
+      to avoid crashing when mousekeys or keyboard a11y features are
+      enabled
+    - Add Use-access-instead-of-checking-permission-modes-for-tmp-..patch
+      to fix access check for X11_TMP_UNIX_DIR
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Thu, 06 Mar 2025 11:38:49 -0500
 
 mutter (48~rc-2) unstable; urgency=medium
 
@@ -464,6 +851,21 @@ mutter (48~beta-6) experimental; urgency=medium
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 28 Feb 2025 13:24:06 -0500
 
+mutter (48~beta-5ubuntu1) plucky; urgency=medium
+
+  * Merge with Debian. Remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+    - Add seat-impl-Initialize-the-impl-reverse-pointer-slightly-ea.patch
+      to avoid crashing when mousekeys or keyboard a11y features are
+      enabled
+  * Restore patch to "Fix access check for X11_TMP_UNIX_DIR".
+    It was accidentally removed when packaging 48 Beta (LP: #2069564)
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Wed, 26 Feb 2025 16:31:27 -0500
+
 mutter (48~beta-5) experimental; urgency=medium
 
   [ Daniel van Vugt ]
@@ -471,6 +873,20 @@ mutter (48~beta-5) experimental; urgency=medium
     (Closes: #1096037)
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Wed, 26 Feb 2025 16:19:43 -0500
+
+mutter (48~beta-4ubuntu1) plucky; urgency=medium
+
+  * Merge with debian, remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+    - Add seat-impl-Initialize-the-impl-reverse-pointer-slightly-ea.patch
+      to avoid crashing when mousekeys or keyboard a11y features are
+      enabled
+  * d/p: Refresh indexes
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Tue, 18 Feb 2025 17:38:41 +0100
 
 mutter (48~beta-4) experimental; urgency=medium
 
@@ -484,6 +900,29 @@ mutter (48~beta-4) experimental; urgency=medium
     (Closes: #1050020)
 
  -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Tue, 18 Feb 2025 17:04:37 +0100
+
+mutter (48~beta-3ubuntu1) plucky; urgency=medium
+
+  * Merge with Debian.
+  * debian/patches/xrandr-scaling: Update for mutter 48
+  * debian/patches/ubuntu: Make argcomplete in gdctl optional
+  * debian/control: Mark python3-argcomplete as suggested package.
+    As per the patch we have now to make python3-argcomplete option, we can
+    safely mark python3-argcomplete as a suggested package, given that's not
+    in main in ubuntu
+  * Remaining changes with debian:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+    - Add seat-impl-Initialize-the-impl-reverse-pointer-slightly-ea.patch
+      to avoid crashing when mousekeys or keyboard a11y features are
+      enabled
+    - Add tools-gdctl-Make-argcomplete-optional.patch to not require python3
+      argcomplete module to run gdctl
+    - Mark python3-argcomplete as suggested package
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Sat, 15 Feb 2025 20:59:59 +0100
 
 mutter (48~beta-3) experimental; urgency=medium
 
@@ -501,6 +940,20 @@ mutter (48~beta-3) experimental; urgency=medium
     only if tests are performed
 
  -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Sat, 15 Feb 2025 16:59:40 +0100
+
+mutter (48~beta-2ubuntu1) plucky; urgency=medium
+
+  * Merge with Debian. Remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+    - Add seat-impl-Initialize-the-impl-reverse-pointer-slightly-ea.patch
+      to avoid crashing when mousekeys or keyboard a11y features are
+      enabled
+  * Temporarily disable the X11 fractional scaling patch
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 11 Feb 2025 22:14:45 -0500
 
 mutter (48~beta-2) experimental; urgency=medium
 
@@ -537,6 +990,20 @@ mutter (48~alpha-1) experimental; urgency=medium
   * Temporarily disable triple buffering patch until it can be updated
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 14 Jan 2025 18:05:13 -0500
+
+mutter (47.4-1ubuntu1) plucky; urgency=medium
+
+  * Merge with Debian (LP: #2091159, LP: #2089843, LP: #1966635).
+  * Remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+    - Add seat-impl-Initialize-the-impl-reverse-pointer-slightly-ea.patch
+      to avoid crashing when mousekeys or keyboard a11y features are
+      enabled
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 14 Jan 2025 19:26:13 -0500
 
 mutter (47.4-1) unstable; urgency=medium
 
@@ -671,6 +1138,66 @@ mutter (47.0-2) unstable; urgency=medium
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 04 Oct 2024 19:12:22 -0400
 
+mutter (47.0-1ubuntu7) plucky; urgency=medium
+
+  [ Nathan Pratta Teodosio ]
+  * Warn if the X11 temp directory does not have the expected permission set.
+
+  [ Simon McVittie ]
+  * d/rules: Treat x11-test.sh as flaky
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 20 Nov 2024 15:33:34 +0100
+
+mutter (47.0-1ubuntu6) plucky; urgency=medium
+
+  [ Nathan Teodosio ]
+  * Fix access check for X11_TMP_UNIX_DIR. (LP: #2069564)
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Fri, 01 Nov 2024 10:09:02 +0100
+
+mutter (47.0-1ubuntu5) plucky; urgency=medium
+
+  * Add seat-impl-Initialize-the-impl-reverse-pointer-slightly-ea.patch
+    to avoid crashing when mousekeys or keyboard a11y features are
+    enabled (LP: #2081728)
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Mon, 21 Oct 2024 15:07:57 +0800
+
+mutter (47.0-1ubuntu4) oracular; urgency=high
+
+  * Add a missing break in derive_logical_monitor_size as part of
+    x11-Add-support-for-fractional-scaling-using-Randr.patch.
+    Because falling through two switch cases was causing the scale to be
+    applied twice, which then resulted in mode verification failing later.
+    (LP: #2080374)
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Mon, 30 Sep 2024 18:15:25 +0800
+
+mutter (47.0-1ubuntu3) oracular; urgency=medium
+
+  * Add patches to restore support for EGL 1.4 and GLES 2.0. They are
+    required for Xilinx (Mali) support (LP: #2080602)
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Wed, 25 Sep 2024 13:49:09 +0800
+
+mutter (47.0-1ubuntu2) oracular; urgency=medium
+
+  * debian/patches: Refresh Indexes
+  * debian/patches: Fix potential crash on destroying x11 struts
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Mon, 16 Sep 2024 22:37:21 +0200
+
+mutter (47.0-1ubuntu1) oracular; urgency=medium
+
+  * Merge with Debian. Remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+    - Remove debian/salsa-ci.yml: Not helpful for us currently
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 16 Sep 2024 07:12:13 -0400
+
 mutter (47.0-1) experimental; urgency=medium
 
   * New upstream release
@@ -698,6 +1225,25 @@ mutter (47~rc-5) experimental; urgency=medium
     Cherry-pick resizing fix for various Electron apps (LP: #2080073)
 
  -- Simon McVittie <smcv@debian.org>  Thu, 12 Sep 2024 12:55:28 +0100
+
+mutter (47~rc-4ubuntu1) oracular; urgency=medium
+
+  [ Jeremy Bícha ]
+  * Merge with Debian. Remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+    - Remove debian/salsa-ci.yml: Not helpful for us currently
+  * Remove the cogl color patches: applied in new release
+  * Remove the mesa workaround patch: shouldn't be needed any more
+  * Cherry-pick resizing fix for various Electron apps (LP: #2080073)
+
+  [ Marco Trevisan (Treviño) ]
+  * d/p/x11-randr-scaling: Update to work with latest upstream changes
+  * debian/control: Update VCS references to ubuntu branch
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 11 Sep 2024 03:39:48 +0200
 
 mutter (47~rc-4) experimental; urgency=medium
 
@@ -765,6 +1311,53 @@ mutter (47~rc-1) experimental; urgency=medium
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 06 Sep 2024 08:53:15 -0400
 
+mutter (47~beta-3ubuntu4) oracular; urgency=medium
+
+  * Expand tests-Temporarily-disable-mutter-x11-tests-for-Ubuntu.patch to
+    include the tools suite below it which is failing with the same
+    root cause. Again, this is not a failure of the test case but a
+    temporary problem with Mesa that Glib apps are incorrectly turning into
+    a bigger issue than it is.
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Fri, 23 Aug 2024 16:51:14 +0800
+
+mutter (47~beta-3ubuntu3) oracular; urgency=medium
+
+  * Add tests-Temporarily-disable-mutter-x11-tests-for-Ubuntu.patch to
+    work around the temporary issue with Zink (Mesa) on Oracular crashing
+    some test cases.
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Fri, 23 Aug 2024 16:08:51 +0800
+
+mutter (47~beta-3ubuntu2) oracular; urgency=medium
+
+  [ Jeremy Bícha ]
+  * debian: Only enable sysprof on architectures where sysprof is available
+
+  [ Daniel van Vugt ]
+  * Update the KMS deadline evasion patch to 2000us instead of 1000us.
+    More laptops need higher numbers than 1000us to avoid cursor stutter
+    (LP: #2076318)
+  * Add cogl-Adjust-generated-shaders-to-GLSL-1.40.patch to restore support
+    for the Nvidia driver (LP: #2077530)
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Fri, 23 Aug 2024 14:24:38 +0800
+
+mutter (47~beta-3ubuntu1) oracular; urgency=medium
+
+  [ Jeremy Bícha ]
+  * Merge with Debian. Remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+  * Drop log spam patch applied in new release
+
+  [ Marco Trevisan (Treviño) ]
+  * d/p: Cherry-pick fixes for Cogl.Color introspection
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Wed, 07 Aug 2024 11:03:27 -0400
+
 mutter (47~beta-3) experimental; urgency=medium
 
   * debian/libmutter-15-0.symbols: Update to include new symbols
@@ -790,6 +1383,20 @@ mutter (47~beta-1) experimental; urgency=medium
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Sun, 04 Aug 2024 15:52:48 -0400
 
+mutter (46.4-1ubuntu1) oracular; urgency=medium
+
+  * Merge with Debian. Remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+    - Add backends-Handle-null-views-instead-of-creating-dummy-view.patch
+      to prevent "clutter_frame_clock_notify_presented: code should not be
+      reached" log spam in some Nvidia Wayland sessions (LP: #1967707)
+  * Remove debian/salsa-ci.yml since it isn't working
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Sun, 04 Aug 2024 12:40:18 -0400
+
 mutter (46.4-1) unstable; urgency=medium
 
   * New upstream release
@@ -814,6 +1421,19 @@ mutter (46.3.1-6) unstable; urgency=medium
     architectures
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Sat, 27 Jul 2024 11:45:53 -0400
+
+mutter (46.3.1-4ubuntu1) oracular; urgency=medium
+
+  * Merge with Debian (LP: #2063147, LP: #2066080). Remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+    - Add backends-Handle-null-views-instead-of-creating-dummy-view.patch
+      to prevent "clutter_frame_clock_notify_presented: code should not be
+      reached" log spam in some Nvidia Wayland sessions (LP: #1967707)
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Sat, 27 Jul 2024 10:12:52 -0400
 
 mutter (46.3.1-4) unstable; urgency=medium
 
@@ -862,6 +1482,28 @@ mutter (46.3.1-2) unstable; urgency=medium
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 12 Jul 2024 18:26:34 -0400
 
+mutter (46.3.1-1ubuntu2) oracular; urgency=medium
+
+  * Ignore test failures on ppc64el but stop ignoring on armhf
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 12 Jul 2024 16:12:56 -0400
+
+mutter (46.3.1-1ubuntu1) oracular; urgency=medium
+
+  * Merge with Debian (LP: #2072992). Remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+    - Add backends-Handle-null-views-instead-of-creating-dummy-view.patch
+      to prevent "clutter_frame_clock_notify_presented: code should not be
+      reached" log spam in some Nvidia Wayland sessions (LP: #1967707)
+    - Ignore test results on armhf & ppc64el
+  * Drop backends-Restore-support-for-X11-cursor-themes.patch:
+    applied in new release
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 12 Jul 2024 11:47:07 -0400
+
 mutter (46.3.1-1) experimental; urgency=medium
 
   [ Jeremy Bícha ]
@@ -876,6 +1518,33 @@ mutter (46.3.1-1) experimental; urgency=medium
     (LP: #2016013)
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 08 Jul 2024 17:27:17 -0400
+
+mutter (46.2-1ubuntu2) oracular; urgency=medium
+
+  [ Marco Trevisan ]
+  * Add place-Always-center-initial-setup.patch to always center the
+    initial setup window (LP: #2016013)
+
+  [ Daniel van Vugt ]
+  * Add backends-Handle-null-views-instead-of-creating-dummy-view.patch
+    to prevent "clutter_frame_clock_notify_presented: code should not be
+    reached" log spam in some Nvidia Wayland sessions (LP: #1967707)
+  * Add backends-Restore-support-for-X11-cursor-themes.patch to restore
+    support for X11 cursor themes, which was lost in Mutter 46.0
+    (LP: #2062377, LP: #2063869)
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Tue, 25 Jun 2024 15:26:37 +0800
+
+mutter (46.2-1ubuntu1) oracular; urgency=medium
+
+  * Merge with Debian. Remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+    - Ignore test results on armhf & ppc64el
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Wed, 12 Jun 2024 16:30:58 -0400
 
 mutter (46.2-1) experimental; urgency=medium
 
@@ -904,6 +1573,19 @@ mutter (46.2-1) experimental; urgency=medium
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Wed, 12 Jun 2024 11:23:13 -0400
 
+mutter (46.1-2ubuntu1) oracular; urgency=medium
+
+  * Merge with Debian (LP: #2064735). Remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+    - Ignore test results on armhf & ppc64el
+  * Drop compositor-sync-ring-Allow-the-gpu_fence-to-be-moved.patch:
+    applied in new release
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 03 May 2024 10:46:53 -0400
+
 mutter (46.1-2) experimental; urgency=medium
 
   * Update libmutter-14-0.symbols for i386
@@ -923,6 +1605,71 @@ mutter (46.1-1) experimental; urgency=medium
   * Update triple buffering patch
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 29 Apr 2024 14:43:24 -0400
+
+mutter (46.0-1ubuntu9) noble; urgency=medium
+
+  * Have mutter-common Breaks/Replaces recent magpie-common
+    for org.gnome.mutter.x11.gschema.xml (LP: #2060659)
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Thu, 18 Apr 2024 16:01:26 -0400
+
+mutter (46.0-1ubuntu8) noble; urgency=medium
+
+  * d/p/ubuntu/x11-Add-support-for-fractional-scaling: Enable X11 scaling again
+    (LP: #2060659)
+  * debian/control: Revert mutter-common breaks libmutter back to focal:
+    - This is not needed anymore as the above enabled patch provides the
+      gsettings schema
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 18 Apr 2024 02:40:05 +0200
+
+mutter (46.0-1ubuntu7) noble; urgency=medium
+
+  [ Daniel van Vugt ]
+  * debian/control: mutter-common now breaks libmutter back to focal.
+    Because  we have dropped X11 fractional scaling support for now,
+    `org.gnome.mutter.x11.gschema.xml` is no longer shipped and those
+    older versions of libmutter will fail to start(LP: #2060423)
+  * Add compositor-sync-ring-Allow-the-gpu_fence-to-be-moved.patch
+    to fix lag and freezes on the Nvidia Xorg driver (LP: #2059847)
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 16 Apr 2024 08:46:54 -0400
+
+mutter (46.0-1ubuntu6) noble; urgency=medium
+
+  * Rebuild for CVE-2024-3094
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Sun, 31 Mar 2024 10:24:22 -0400
+
+mutter (46.0-1ubuntu3) noble; urgency=medium
+
+  * Ignore test results to have an installable package on other architectures,
+    which succeed to build. Failing test is:
+      116/184 mutter:clutter+clutter/conform / gesture
+  * mutter: Relax the dependency on mutter-common, not using ${source:Version},
+    but the lowest upstream version number.
+
+ -- Matthias Klose <doko@ubuntu.com>  Sun, 24 Mar 2024 19:20:17 +0100
+
+mutter (46.0-1ubuntu2) noble; urgency=high
+
+  * No change rebuild against libcanberra0t64.
+
+ -- Julian Andres Klode <juliank@ubuntu.com>  Sun, 24 Mar 2024 16:24:22 +0100
+
+mutter (46.0-1ubuntu1) noble; urgency=medium
+
+  * Merge with Debian NEW. Remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+    - Temporarily disable x11 fractional scaling patch
+  * Ignore test failures on armhf & ppc64el
+  * Drop obsolete Breaks
+  * Add Breaks: gnome-shell << 46.0
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 18 Mar 2024 16:46:38 -0400
 
 mutter (46.0-1) experimental; urgency=medium
 
@@ -973,13 +1720,6 @@ mutter (45.3-2) experimental; urgency=medium
 
  -- Simon McVittie <smcv@debian.org>  Mon, 15 Jan 2024 17:46:16 +0000
 
-mutter (44.8-3.1) unstable; urgency=medium
-
-  * Non-maintainer upload.
-  * Rename libraries for 64-bit time_t transition.  Closes: #1064248
-
- -- Benjamin Drung <bdrung@debian.org>  Wed, 28 Feb 2024 21:33:39 +0000
-
 mutter (44.8-3) unstable; urgency=medium
 
   * Cherry-pick several cursor fix to fix compatibility with latest
@@ -1026,13 +1766,68 @@ mutter (44.7-2) unstable; urgency=medium
 
  -- Simon McVittie <smcv@debian.org>  Sun, 14 Jan 2024 19:32:46 +0000
 
+mutter (46~rc-0ubuntu1) noble; urgency=medium
+
+  [ Jeremy Bícha ]
+  * New upstream release
+  * Update symbols file
+  * Disable optional libdisplay-info feature for now
+  * Refresh patches
+
+  [ Daniel van Vugt ]
+  * Update triple buffering patch
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Thu, 07 Mar 2024 17:18:24 -0500
+
+mutter (46~beta-0ubuntu1) noble; urgency=medium
+
+  [ Jeremy Bícha ]
+  * New upstream release
+  * Update binary package names for soname bump
+  * Update symbols
+  * Add Build-Depends: libpixman-1-dev
+  * Bump minimum wayland-protocols to 1.33
+  * Drop obsolete Build-Depends: libjson-glib-dev
+  * Drop patch applied in new release
+  * Temporarily disable x11 fractional scaling patch
+
+  [ Daniel van Vugt ]
+  * Update triple buffering patch
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 27 Feb 2024 10:26:07 -0500
+
+mutter (45.3-1ubuntu1) noble; urgency=medium
+
+  * Merge with Debian. Remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 08 Jan 2024 14:42:36 -0500
+
+mutter (44.8-3.1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Rename libraries for 64-bit time_t transition.  Closes: #1064248
+
+ -- Benjamin Drung <bdrung@debian.org>  Wed, 28 Feb 2024 21:33:39 +0000
+
 mutter (45.3-1) experimental; urgency=medium
 
   * New upstream release
-  * debian/libmutter-13-0.symbols: Add new symbol
-  * Drop overrides for non-Linux since we build for Linux only
 
- -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 08 Jan 2024 15:58:29 -0500
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 08 Jan 2024 14:42:16 -0500
+
+mutter (45.2-3ubuntu1) noble; urgency=medium
+
+  * Merge with Debian. Remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Wed, 20 Dec 2023 09:32:48 -0500
 
 mutter (45.2-3) experimental; urgency=medium
 
@@ -1068,6 +1863,16 @@ mutter (45.2-2) experimental; urgency=medium
 
  -- Simon McVittie <smcv@debian.org>  Wed, 13 Dec 2023 17:08:10 +0000
 
+mutter (45.2-1ubuntu1) noble; urgency=medium
+
+  * Merge with Debian. Remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 08 Dec 2023 15:19:05 -0500
+
 mutter (44.7-1) unstable; urgency=medium
 
   * Team upload
@@ -1088,6 +1893,16 @@ mutter (45.2-1) experimental; urgency=medium
   * Drop unimportant patch not included in the mutter 45.2 backports
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 04 Dec 2023 08:54:20 -0500
+
+mutter (45.1-2ubuntu1) noble; urgency=medium
+
+  * Merge with Debian. Remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Sun, 12 Nov 2023 12:35:36 -0500
 
 mutter (45.1-2) experimental; urgency=medium
 
@@ -1113,6 +1928,40 @@ mutter (45.1-1) experimental; urgency=medium
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Wed, 08 Nov 2023 18:49:03 +0200
 
+mutter (45.0-3ubuntu4) noble; urgency=medium
+
+  * Cherry pick 4 commits to fix SIGKILL on lockscreen. (LP: #2034619)
+  * Drop kms-impl-device-Inhibit-deadline-timer-on-amdgpu.patch
+
+ -- Mario Limonciello <superm1@gmail.com>  Thu, 26 Oct 2023 10:27:44 -0500
+
+mutter (45.0-3ubuntu3) mantic; urgency=medium
+
+  * Update build autopkgtest to not run dh_auto_test (LP: #2038564)
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Thu, 05 Oct 2023 14:29:32 -0400
+
+mutter (45.0-3ubuntu2) mantic; urgency=medium
+
+  [ Jeremy Bícha ]
+  * Cherry-pick 2 commits to fix vsync (LP: #2037235)
+
+  [ Daniel van Vugt ]
+  * Add patch to fix GNOME Shell getting SIGKILL'd under heavy load
+    or screen locked under Wayland with AMD GPUs (LP: #2034619)
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Wed, 04 Oct 2023 11:00:14 -0400
+
+mutter (45.0-3ubuntu1) mantic; urgency=medium
+
+  * Merge with Debian. Remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 03 Oct 2023 18:43:15 -0400
+
 mutter (45.0-3) experimental; urgency=medium
 
   [ Simon McVittie ]
@@ -1133,6 +1982,16 @@ mutter (45.0-3) experimental; urgency=medium
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 03 Oct 2023 18:38:45 -0400
 
+mutter (45.0-2ubuntu1) mantic; urgency=medium
+
+  * Merge with Debian. Remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 22 Sep 2023 11:27:59 -0400
+
 mutter (45.0-2) experimental; urgency=medium
 
   [ Daniel van Vugt ]
@@ -1143,6 +2002,16 @@ mutter (45.0-2) experimental; urgency=medium
   * Cherry-pick patch to fix changing input language in modal popups
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 22 Sep 2023 10:50:00 -0400
+
+mutter (45.0-1ubuntu1) mantic; urgency=medium
+
+  * Merge with Debian. Remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 18 Sep 2023 11:33:45 -0400
 
 mutter (45.0-1) experimental; urgency=medium
 
@@ -1199,6 +2068,41 @@ mutter (45~rc-1) experimental; urgency=medium
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Sun, 10 Sep 2023 21:04:02 -0400
 
+mutter (45~rc-0ubuntu2) mantic; urgency=medium
+
+  * Add cogl-onscreen-glx-Forcefully-disable-cogl_onscreen_glx_ge.patch
+    to work around https://launchpad.net/bugs/2034672
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Fri, 08 Sep 2023 10:40:24 -0400
+
+mutter (45~rc-0ubuntu1) mantic; urgency=medium
+
+  * New upstream release
+  * debian/control.in: Bump minimum libei to 1.0.901
+  * debian/control.in: Bump minimum compatible GNOME Shell to 45~rc
+  * debian/libmutter-13-0.symbols: Update
+  * Add new Mtk sublibrary files to gir & dev install lists
+  * Drop "45" and sysprof patches: applied in new release
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Wed, 06 Sep 2023 15:29:01 -0400
+
+mutter (45~beta.1-1ubuntu2) mantic; urgency=medium
+
+  * Cherry-pick 2 proposed patches to build with sysprof 45
+  * debian/control.in: Build-Depend on libsysprof-6-dev
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 01 Sep 2023 08:20:58 -0400
+
+mutter (45~beta.1-1ubuntu1) mantic; urgency=medium
+
+  * Merge with Debian. Remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Tue, 22 Aug 2023 10:01:09 -0400
+
 mutter (45~beta.1-1) experimental; urgency=medium
 
   [ Jeremy Bícha ]
@@ -1217,6 +2121,32 @@ mutter (45~beta.1-1) experimental; urgency=medium
   * Update triple buffering patch
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 21 Aug 2023 11:19:08 -0400
+
+mutter (45~beta.1-0ubuntu2) mantic; urgency=medium
+
+  * Drop wayland-data-device-Allow-any-drag-timestamp patch:
+    no longer needed (LP: #1964541) (Closes: #1050025)
+  * Add patch to skip new thread priority modification test on arm
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 21 Aug 2023 12:40:23 -0400
+
+mutter (45~beta.1-0ubuntu1) mantic; urgency=medium
+
+  [ Jeremy Bícha ]
+  * New upstream release
+  * Update binary package names for soname bump
+  * Update symbols
+  * debian/control.in: Build-Depend on libei-dev & libeis-dev. See bug 2031406
+  * Refresh patches
+  * Drop mesa 23.1 patch: applied in new release
+  * Drop cursor-renderer arm64 patch: apparently unneeded with mesa >= 22.3.3
+  * Temporarily disable wayland-data-device-Allow-any-drag-timestamp patch
+    until it can be updated
+
+  [ Daniel van Vugt ]
+  * Update triple buffering patch
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Thu, 17 Aug 2023 13:25:40 -0400
 
 mutter (44.5-2) unstable; urgency=medium
 
@@ -1429,11 +2359,31 @@ mutter (44.3-4) experimental; urgency=medium
 
  -- Simon McVittie <smcv@debian.org>  Thu, 17 Aug 2023 10:44:06 +0100
 
+mutter (44.3-3ubuntu1) mantic; urgency=medium
+
+  * Merge with Debian. Remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 14 Aug 2023 18:17:54 -0400
+
 mutter (44.3-3) experimental; urgency=medium
 
   * debian/control.in: Build-Depend on libgtk-4-dev & libsysprof-4-dev
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 14 Aug 2023 17:54:56 -0400
+
+mutter (44.3-2ubuntu1) mantic; urgency=medium
+
+  * Merge with Debian. Remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 14 Aug 2023 17:29:03 -0400
 
 mutter (44.3-2) experimental; urgency=medium
 
@@ -1449,6 +2399,16 @@ mutter (44.3-2) experimental; urgency=medium
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 14 Aug 2023 17:08:48 -0400
 
+mutter (44.3-1ubuntu1) mantic; urgency=medium
+
+  * Merge with Debian. Remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Thu, 06 Jul 2023 17:30:21 -0400
+
 mutter (44.3-1) experimental; urgency=medium
 
   [ Jeremy Bícha ]
@@ -1460,11 +2420,31 @@ mutter (44.3-1) experimental; urgency=medium
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Thu, 06 Jul 2023 17:04:05 -0400
 
+mutter (44.2-3ubuntu1) mantic; urgency=medium
+
+  * Merge with Debian. Remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Wed, 28 Jun 2023 15:31:07 -0400
+
 mutter (44.2-3) experimental; urgency=medium
 
   * Cherry-pick patch to fix build test with mesa 23.1 (LP: #2025287)
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Wed, 28 Jun 2023 15:29:10 -0400
+
+mutter (44.2-2ubuntu1) mantic; urgency=medium
+
+  * Merge with Debian. Remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Wed, 28 Jun 2023 09:44:49 -0400
 
 mutter (44.2-2) experimental; urgency=medium
 
@@ -1479,6 +2459,16 @@ mutter (44.2-2) experimental; urgency=medium
     * Fix a crash on resume from sleep (LP: #2020049).
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Wed, 28 Jun 2023 09:42:56 -0400
+
+mutter (44.2-1ubuntu1) mantic; urgency=medium
+
+  * Merge with Debian. Remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Mon, 05 Jun 2023 12:48:09 -0400
 
 mutter (44.2-1) experimental; urgency=medium
 
@@ -1556,6 +2546,19 @@ mutter (43.4-1) unstable; urgency=medium
 
  -- Simon McVittie <smcv@debian.org>  Mon, 10 Apr 2023 14:07:33 +0100
 
+mutter (44.1-1ubuntu1) mantic; urgency=medium
+
+  * Merge with Debian (LP: #2020225, LP: #2012100, LP: #2012717,
+    LP: #2013216, LP: #2019225, LP: #2006044, LP: #2015861, LP: #1999578,
+    LP: #2011251, LP: #2016308)
+  * Remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Add window-Add-ability-to-override-the-edge-constraints.patch
+      + Make possible for extensions (such as Tiling Assistant) to override
+        window constraints. (LP: #2007710, #2011611)
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 19 May 2023 16:24:49 -0400
+
 mutter (44.1-1) experimental; urgency=medium
 
   [ Jeremy Bícha ]
@@ -1573,6 +2576,45 @@ mutter (44.1-1) experimental; urgency=medium
 
  -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 19 May 2023 16:18:13 -0400
 
+mutter (44.0-2ubuntu6) mantic; urgency=medium
+
+  [ Marco Trevisan (Treviño) ]
+  * Fix issue with Firefox opening black window in wayland sessions
+    - d/p/display-Set-compositor-selection-earlier-on-XWayland.patch
+      (LP: #1987976)
+
+ -- Gunnar Hjalmarsson <gunnarhj@ubuntu.com>  Mon, 01 May 2023 18:27:57 +0200
+
+mutter (44.0-2ubuntu4) lunar; urgency=medium
+
+  [ Daniel van Vugt ]
+  * Add proposed patch to treat XIChangeProperty errors as warnings,
+    fixes crash on login or resume from suspend with Nvidia graphics drivers
+    (LP: #2014986)
+
+ -- Jeremy Bícha <jbicha@ubuntu.com>  Fri, 14 Apr 2023 14:32:30 -0400
+
+mutter (44.0-2ubuntu3) lunar; urgency=medium
+
+  * debian/patches: Listen to XSettings changes to update decorations
+    (LP: #2012733)
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Tue, 04 Apr 2023 22:26:20 +0200
+
+mutter (44.0-2ubuntu2) lunar; urgency=medium
+
+  * debian/libmutter-12-0.symbols: Restore symbols for triple buffering patch
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Mon, 27 Mar 2023 09:46:13 -0400
+
+mutter (44.0-2ubuntu1) lunar; urgency=medium
+
+  * Merge with Debian. Remaining change:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+  * Re-enable the triple buffering patch
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Mon, 27 Mar 2023 09:35:04 -0400
+
 mutter (44.0-2) experimental; urgency=medium
 
   * Update debian/patches/debian/Support-Dynamic-triple-double-buffering.patch:
@@ -1580,6 +2622,15 @@ mutter (44.0-2) experimental; urgency=medium
     fixed. And some minor code tidying.
 
  -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Mon, 27 Mar 2023 09:27:35 -0400
+
+mutter (44.0-1ubuntu1) lunar; urgency=medium
+
+  * Merge with Debian. Remaining change:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - Disable triple buffering patch
+  * debian/patches: Refresh indexes
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Mon, 20 Mar 2023 21:12:31 +0100
 
 mutter (44.0-1) experimental; urgency=medium
 
@@ -1597,6 +2648,42 @@ mutter (44.0-1) experimental; urgency=medium
     only solves #1031945.
 
  -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Mon, 20 Mar 2023 20:35:02 +0100
+
+mutter (44~rc-1ubuntu3) lunar; urgency=medium
+
+  * debian/control.in: Have libmutter-12-dev depend on libegl1-mesa-dev
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Tue, 14 Mar 2023 19:19:46 -0400
+
+mutter (44~rc-1ubuntu2) lunar; urgency=medium
+
+  [ Jeremy Bicha ]
+  * debian/libmutter-12-0.symbols: Drop symbols from triple buffering patch
+
+  [ Marco Trevisan (Treviño) ]
+  * debian/patches: Do not use fatal warnings on fractional scaling issues
+  * debian/patches: Add ability to override window edge constraints.
+    Make possible for extensions (such as Tiling Assistant) to override windows
+    constraints. (LP: #2007710, #2011611)
+  * debian/libmutter-12-0.symbols: Add new override constraint symbol
+  * debian/libmutter-12-0.lintian-overrides: Allow using debian version in
+    symbols: it's a private API exposed only by ubuntu
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Tue, 14 Mar 2023 19:17:11 +0100
+
+mutter (44~rc-1ubuntu1) lunar; urgency=medium
+
+  [ Jeremy Bicha
+  * Merge with Debian. Remaining changes:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+    - debian/control: Do not depend on legacy EGL package name
+  * Temporarily disable triple buffering patch to ensure quality
+    after major changes to mutter since 44~beta
+
+  [ Marco Trevisan (Treviño) ]
+  * Update the fractional scaling patch
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Fri, 10 Mar 2023 08:20:44 -0500
 
 mutter (44~rc-1) experimental; urgency=medium
 
@@ -1632,6 +2719,25 @@ mutter (44~rc-1) experimental; urgency=medium
     44~rc due to the gtk dependency removal
 
  -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 08 Mar 2023 02:29:22 +0100
+
+mutter (44~beta-3ubuntu2) lunar; urgency=medium
+
+  * debian/patches: Update code to get backend on X11-fractional scaling
+  * debian/control: Do not depend on legacy EGL package name
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 23 Feb 2023 20:03:24 +0100
+
+mutter (44~beta-3ubuntu1) lunar; urgency=medium
+
+  [ Jeremy Bicha
+  * Merge with Debian. Remaining change:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+
+  * Merge packaging from unstable (Closes: #1031945, #1031847)
+  [ Marco Trevisan (Treviño) ]
+  * Update the fractional scaling patch
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Thu, 23 Feb 2023 07:11:52 -0500
 
 mutter (44~beta-3) experimental; urgency=medium
 
@@ -1761,6 +2867,13 @@ mutter (43.3-1) experimental; urgency=medium
 
  -- Simon McVittie <smcv@debian.org>  Wed, 15 Feb 2023 17:00:58 +0000
 
+mutter (43.2-6ubuntu1) lunar; urgency=medium
+
+  * Merge with Debian. Remaining change:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Mon, 30 Jan 2023 08:55:56 -0500
+
 mutter (43.2-6) unstable; urgency=medium
 
   * Team upload
@@ -1806,6 +2919,13 @@ mutter (43.2-6) unstable; urgency=medium
 
  -- Simon McVittie <smcv@debian.org>  Sun, 29 Jan 2023 15:26:48 +0000
 
+mutter (43.2-5ubuntu1) lunar; urgency=medium
+
+  * Merge with Debian. Remaining change:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Mon, 23 Jan 2023 11:44:41 -0500
+
 mutter (43.2-5) unstable; urgency=medium
 
   [ Daniel van Vugt ]
@@ -1816,6 +2936,13 @@ mutter (43.2-5) unstable; urgency=medium
     for panfrost, vc4, v3d... (LP: #1988859)
 
  -- Jeremy Bicha <jbicha@ubuntu.com>  Mon, 23 Jan 2023 11:30:06 -0500
+
+mutter (43.2-4ubuntu1) lunar; urgency=medium
+
+  * Merge with Debian. Remaining change:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Tue, 27 Dec 2022 15:00:07 -0900
 
 mutter (43.2-4) unstable; urgency=medium
 
@@ -1898,6 +3025,40 @@ mutter (43.0-2) unstable; urgency=medium
 
  -- Jeremy Bicha <jbicha@ubuntu.com>  Tue, 27 Sep 2022 19:00:48 -0400
 
+mutter (43.0-1ubuntu5) lunar; urgency=medium
+
+  * Revert "debian/rules: Ignore test failures on armhf"
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Mon, 21 Nov 2022 18:08:23 -0500
+
+mutter (43.0-1ubuntu4) kinetic; urgency=medium
+
+  * debian/rules: Ignore test failures on armhf.
+    Temporary, to unblock the mutter update while we investigate the regression
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Mon, 17 Oct 2022 19:58:15 -0400
+
+mutter (43.0-1ubuntu3) kinetic; urgency=medium
+
+  * Cherry-pick patches to avoid crash when ICC color profile is invalid
+    (Closes: #1021680) (LP: #1993114)
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Mon, 17 Oct 2022 06:55:32 -0400
+
+mutter (43.0-1ubuntu2) kinetic; urgency=medium
+
+  * Cherry-pick patch to fix Night Light availability in GNOME Settings
+    (Closes: #1020941) (LP: #1990207)
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Fri, 14 Oct 2022 16:25:40 -0400
+
+mutter (43.0-1ubuntu1) kinetic; urgency=medium
+
+  * Merge with Debian. Remaining change:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Mon, 19 Sep 2022 13:10:57 -0400
+
 mutter (43.0-1) experimental; urgency=medium
 
   * Team upload
@@ -1916,6 +3077,21 @@ mutter (43.0-1) experimental; urgency=medium
       are currently available on those architectures for other reasons
 
  -- Simon McVittie <smcv@debian.org>  Sun, 18 Sep 2022 20:18:26 +0100
+
+mutter (43~rc-2ubuntu2) kinetic; urgency=medium
+
+  * Ignore build test failures on s390x
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Tue, 13 Sep 2022 11:43:54 -0400
+
+mutter (43~rc-2ubuntu1) kinetic; urgency=medium
+
+  * Merge with debian, containing new upstream version.
+  * Refresh xrandr scaling patch to latest upstream code
+  * Remaining changes with debian:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 08 Sep 2022 18:15:23 +0200
 
 mutter (43~rc-2) experimental; urgency=medium
 
@@ -1948,6 +3124,19 @@ mutter (43~beta-4) experimental; urgency=medium
 
  -- Jeremy Bicha <jbicha@ubuntu.com>  Thu, 25 Aug 2022 05:28:09 -0400
 
+mutter (43~beta-3ubuntu2) kinetic; urgency=medium
+
+  * debian/tests/libmutter-11-dev: fix a reference to mutter-10
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Thu, 25 Aug 2022 05:25:39 -0400
+
+mutter (43~beta-3ubuntu1) kinetic; urgency=medium
+
+  * Merge from Debian unstable. Remaining change:
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Wed, 24 Aug 2022 17:23:26 -0400
+
 mutter (43~beta-3) experimental; urgency=medium
 
   * Add patches from Ubuntu:
@@ -1977,6 +3166,58 @@ mutter (43~beta-1) experimental; urgency=medium
 
  -- Jeremy Bicha <jbicha@ubuntu.com>  Tue, 16 Aug 2022 12:07:41 -0400
 
+mutter (42.4-2ubuntu1) kinetic; urgency=medium
+
+  * Merge from Debian unstable (LP: #1985856). Remaining changes:
+    - Add triple-buffering patch
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      + X11: Add support for fractional scaling using Randr
+    - Add ubuntu/wayland-data-device-Allow-any-drag-timestamp....patch
+      + Allow any drag timestamp as drag start serial
+    - Add backends-native-kms-crtc-Don-t-compare-gamma-values-on-un.patch
+      + Avoid memory errors when comparing gamma values
+    - Add monitor-manager-Ensure-monitors-settings-after-backend-ha.patch
+      + Ensure privacy screen settings are applied on startup
+    - Add patches from GNOME !2364
+      + Fix X11 selection related crash when Xwayland died
+    - debian/libmutter-10-0.symbols: Add symbols for triple buffering patch
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Wed, 17 Aug 2022 14:39:04 -0400
+
+mutter (42.4-2) unstable; urgency=medium
+
+  * Team upload
+  * d/control.in, d/gbp.conf: Set up branches for an unstable upload
+  * d/p/tests-Give-mutter-test-runner-the-RUNPATH-to-find-Clutter.patch:
+    Add patch to fix missing RUNPATH in tests, fixing an autopkgtest
+    regression in 42.4.
+    - Note that this does not resolve a different autopkgtest regression
+      in 42.4, in environments where /dev/dri/card0 exists but is
+      inaccessible. However, the /dev/dri/card0 issue is not fatal for
+      Debian's production infrastructure, which uses autopkgtest-virt-lxc
+      and therefore does not provide /dev/dri/card0 at all.
+
+ -- Simon McVittie <smcv@debian.org>  Wed, 17 Aug 2022 17:54:28 +0100
+
+mutter (42.4-1ubuntu1) kinetic; urgency=medium
+
+  * Merge from Debian unstable (LP: #1985856). Remaining changes:
+    - Add triple-buffering patch
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      + X11: Add support for fractional scaling using Randr
+    - Add ubuntu/wayland-data-device-Allow-any-drag-timestamp....patch
+      + Allow any drag timestamp as drag start serial
+    - Add backends-native-kms-crtc-Don-t-compare-gamma-values-on-un.patch
+      + Avoid memory errors when comparing gamma values
+    - Add monitor-manager-Ensure-monitors-settings-after-backend-ha.patch
+      + Ensure privacy screen settings are applied on startup
+    - Add patches from GNOME !2364
+      + Fix X11 selection related crash when Xwayland died
+    - debian/libmutter-10-0.symbols: Add symbols for triple buffering patch
+  * debian/patches: Refresh
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Fri, 12 Aug 2022 02:05:18 +0200
+
 mutter (42.4-1) unstable; urgency=medium
 
   * New upstream release
@@ -1991,11 +3232,56 @@ mutter (42.3-2) unstable; urgency=medium
 
  -- Jeremy Bicha <jbicha@ubuntu.com>  Sat, 16 Jul 2022 14:14:30 +0200
 
+mutter (42.3-1ubuntu2) kinetic; urgency=medium
+
+  * Rebuild against latest gnome-desktop
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Thu, 28 Jul 2022 07:22:57 -0400
+
+mutter (42.3-1ubuntu1) kinetic; urgency=medium
+
+  * Merge from Debian unstable (LP: #1981724). Remaining changes:
+    - Add triple-buffering patch
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      + X11: Add support for fractional scaling using Randr
+    - Add ubuntu/wayland-data-device-Allow-any-drag-timestamp....patch
+      + Allow any drag timestamp as drag start serial
+    - Add backends-native-kms-crtc-Don-t-compare-gamma-values-on-un.patch
+      + Avoid memory errors when comparing gamma values
+    - Add monitor-manager-Ensure-monitors-settings-after-backend-ha.patch
+      + Ensure privacy screen settings are applied on startup
+    - Add patches from GNOME !2364
+      + Fix X11 selection related crash when Xwayland died
+    - debian/libmutter-10-0.symbols: Add symbols for triple buffering patch
+  * Drop patches applied in new release
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Thu, 14 Jul 2022 17:26:15 +0200
+
 mutter (42.3-1) unstable; urgency=medium
 
   * New upstream release
 
  -- Jeremy Bicha <jbicha@ubuntu.com>  Thu, 14 Jul 2022 16:33:25 +0200
+
+mutter (42.2-1ubuntu1) kinetic; urgency=medium
+
+  * Merge from Debian unstable. Remaining changes:
+    - Add triple-buffering patch
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      + X11: Add support for fractional scaling using Randr
+    - Add ubuntu/wayland-data-device-Allow-any-drag-timestamp....patch
+      + Allow any drag timestamp as drag start serial
+    - Add backends-native-kms-crtc-Don-t-compare-gamma-values-on-un.patch
+      + Avoid memory errors when comparing gamma values
+    - Add monitor-manager-Ensure-monitors-settings-after-backend-ha.patch
+      + Ensure privacy screen settings are applied on startup
+    - Add patches from GNOME !2364
+      + Fix X11 selection related crash when Xwayland died
+    - debian/libmutter-10-0.symbols: Add symbols for triple buffering patch
+  * Refresh patches
+  * Drop privacy screen settings patch: applied in new release
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Wed, 01 Jun 2022 08:08:58 -0400
 
 mutter (42.2-1) unstable; urgency=medium
 
@@ -2003,6 +3289,29 @@ mutter (42.2-1) unstable; urgency=medium
     - Fix crash when restarting GNOME Shell on Xorg (LP: #1969893)
 
  -- Jeremy Bicha <jbicha@ubuntu.com>  Tue, 31 May 2022 10:10:28 -0400
+
+mutter (42.1-1ubuntu1) kinetic; urgency=medium
+
+  [ Jeremy Bicha ]
+  * Merge from Debian unstable. Remaining changes:
+    - Add triple-buffering patch
+    - Add x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      + X11: Add support for fractional scaling using Randr
+    - Add ubuntu/wayland-data-device-Allow-any-drag-timestamp....patch
+      + Allow any drag timestamp as drag start serial
+    - Add backends-native-kms-crtc-Don-t-compare-gamma-values-on-un.patch
+      + Avoid memory errors when comparing gamma values
+    - Add monitor-manager-Ensure-monitors-settings-after-backend-ha.patch
+      + Ensure privacy screen settings are applied on startup
+    - Add patches from GNOME !2364
+      + Fix X11 selection related crash when Xwayland died
+    - debian/libmutter-10-0.symbols: Add symbols for triple buffering patch
+  * Refresh triple buffering patch with latest version
+
+  [ Marco Trevisan (Treviño) ]
+  * debian/patches: Adapt expected messages to new domains
+
+ -- Jeremy Bicha <jbicha@ubuntu.com>  Fri, 13 May 2022 09:14:41 -0400
 
 mutter (42.1-1) unstable; urgency=medium
 
@@ -2044,6 +3353,45 @@ mutter (42.0-4) unstable; urgency=medium
 
  -- Simon McVittie <smcv@debian.org>  Tue, 19 Apr 2022 11:54:56 +0100
 
+mutter (42.0-3ubuntu2) jammy; urgency=medium
+
+  * Revert "debian/patches: Fix privacy-screen and connectors updates with
+    triple-buffering"
+    This reverts commit 4a568376f00111e52badcb69857c3fc57ae7d394.
+  * debian/patches: Fix triple buffering patch to avoid possible regressions.
+    Ensure that fix for lp:1966178 doesn't lead to regressions as in:
+      https://gitlab.gnome.org/GNOME/mutter/-/merge_requests/1441#note_1429212
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 14 Apr 2022 15:16:57 +0200
+
+mutter (42.0-3ubuntu1) jammy; urgency=medium
+
+  [ Marco Trevisan (Treviño) ]
+  * debian/patches: Cherry-pick various upstream commits for 42.1:
+    + onscreen/native: Fall back if COPY_MODE_SECONDARY_GPU fails to init
+      (LP: #1964037, #1959888)
+  * debian/patches: Allow any drag timestamp as drag start serial (LP: #1964541)
+  * debian/patches: Move x11-fractional scaling under ubuntu namespace
+  * debian/patches: Account ClutterStage grabs on Wayland key focus sync
+    (LP: #1964442)
+  * debian/libmutter-10-0.symbols: Update including new internal symbols
+  * debian/patches: Avoid memory errors when comparing gamma values
+  * debian/patches: Fix privacy-screen and connectors updates with
+    triple-buffering (LP: #1966178)
+  * debian/patches: Ensure privacy screen settings are applied on startup
+    (LP: #1966178)
+
+  [ Jeremy Bicha ]
+  * Merge from Debian unstable. Remaining changes:
+    - debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      + X11: Add support for fractional scaling using Randr
+    - Add triple-buffering patch
+    - debian/libmutter-10-0.symbols: Add symbols for triple buffering patch
+    - ubuntu/wayland-data-device-Allow-any-drag-timestamp-as-drag-star.patch:
+      + handle DnD for old (snapped) gtk apps that used wrong wayland serials
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 13 Apr 2022 03:30:39 +0200
+
 mutter (42.0-3) unstable; urgency=medium
 
   [ Marco Trevisan (Treviño) ]
@@ -2055,6 +3403,25 @@ mutter (42.0-3) unstable; urgency=medium
   * Release to unstable
 
  -- Jeremy Bicha <jbicha@ubuntu.com>  Mon, 28 Mar 2022 09:34:27 -0400
+
+mutter (42.0-1ubuntu1) jammy; urgency=medium
+
+  [ Jeremy Bicha ]
+  * Merge from Debian unstable. Remaining changes:
+    - debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      + X11: Add support for fractional scaling using Randr
+    - Add triple-buffering patch
+    - debian/libmutter-10-0.symbols: Add symbols for triple buffering patch
+  * Drop glibc-tools from Build-Depends: no longer used
+  * Update triple buffering patch
+
+  [ Marco Trevisan (Treviño) ]
+  * debian/patches: Refresh
+  * debian/patches: Cherry-pick upstream fixes targeting 42.1
+  * debian/patches: Ensure repick happens on actors visibility changed
+    (LP: #1964545)
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Mon, 28 Mar 2022 16:05:22 +0200
 
 mutter (42.0-1) experimental; urgency=medium
 
@@ -2075,6 +3442,21 @@ mutter (42~rc-1) experimental; urgency=medium
   * Refresh patches
 
  -- Jeremy Bicha <jeremy.bicha@canonical.com>  Wed, 09 Mar 2022 13:11:43 -0500
+
+mutter (42~beta-1ubuntu2) jammy; urgency=medium
+
+  * debian/patches: Skip monitor-size tests that may fail on autopkgtest
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Mon, 14 Mar 2022 02:27:21 +0100
+
+mutter (42~beta-1ubuntu1) jammy; urgency=medium
+
+  * Merge with debian after being accepted (no content change)
+  * xrandr-scaling: Do not change type of experimental settings schema.
+    There's no real benefit to do this change as it's only for power-users
+    and it will break updaters (and g-c-c integration).
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Fri, 25 Feb 2022 03:22:10 +0100
 
 mutter (42~beta-1) experimental; urgency=medium
 
@@ -2107,11 +3489,70 @@ mutter (42~beta-1) experimental; urgency=medium
   * debian/control: Update dependencies
   * debian/patches: Refresh and update to latest code
   * debian/libmutter-(test-)10.symbols: Update
+  * d/p/11-Add-support-for-fractional-scaling-using-Randr.patch:
+    - Refresh as per upstream changes
 
   [ Jeremy Bicha ]
   * Update autopkgtest & lintian override for new version
 
+  [ Daniel van Vugt ]
+  * debian/patches: Add support for dynamic triple/double buffering
+    (LP: #1880586)
+
  -- Jeremy Bicha <jeremy.bicha@canonical.com>  Fri, 18 Feb 2022 07:32:24 -0500
+
+mutter (42~beta-0ubuntu1) jammy; urgency=medium
+
+  [ Marco Trevisan (Treviño) ]
+  * New upstream release:
+    - Implement a new Clutter grab API
+    - Support KMS testing via QEMU
+    - Add support for privacy screen
+    - Allow changing monitor configuration policy
+    - Fix possible missed clicks on menus
+    - Place popups on the same monitor as the anchor rect (LP: #1930567)
+    - Announce DMA-BUF support via pipewire
+    - Raise the file descriptor limit of the wayland compositor
+    - Fix resetting idle time on lid open
+    - Reset idletime when unplugging the power cable
+    - Keep a single cursor sprite visible with tablets
+    - Sync keyboard LEDs after layout changes (LP: #1830637)
+    - Honor window input area in picking
+    - Handle mixture of keycombo/no action in pad rings/strips
+    - Fix videos in Firefox stuttering in overview
+    - Fix X11 middle button emulation setting
+    - Fix crash on empty frame info queue (LP: #1960585)
+    - Fix window size after returning from fullscreen (LP: #1947467)
+    - Don't change workspaces of unmanaged windows (LP: #1933996)
+    - Ensure constraints after client resize (LP: #1917939)
+  * debian/watch: Accept pre-release version
+    Can still use gbp import --upstream-version=XX.Y to get stable only
+  * debian: Rename packages to use mutter-10 API
+  * debian/rules: Compute mutter API version on unstable releases too
+  * debian/control: Update dependencies
+  * debian/patches: Refresh and update to latest code
+  * debian/libmutter-(test-)10.symbols: Update
+  * d/p/11-Add-support-for-fractional-scaling-using-Randr.patch:
+    - Refresh as per upstream changes
+
+  [ Jeremy Bicha ]
+  * Update autopkgtest & lintian override for new version
+
+  [ Daniel van Vugt ]
+  * debian/patches: Add support for dynamic triple/double buffering
+    (LP: #1880586)
+
+ -- Jeremy Bicha <jeremy.bicha@canonical.com>  Fri, 18 Feb 2022 07:41:22 -0500
+
+mutter (41.3-3ubuntu1) jammy; urgency=low
+
+  * Merge from Debian unstable. Remaining changes:
+    - debian/gbp.conf: update upstream branch to point to ubuntu/master
+    - debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      + X11: Add support for fractional scaling using Randr
+    - Add glibc-tools, needed to fix build with newer glibc
+
+ -- Gianfranco Costamagna <locutusofborg@debian.org>  Thu, 17 Feb 2022 20:46:41 +0100
 
 mutter (41.3-3) unstable; urgency=medium
 
@@ -2136,6 +3577,43 @@ mutter (41.3-2) unstable; urgency=medium
     configuration
 
  -- Simon McVittie <smcv@debian.org>  Mon, 07 Feb 2022 18:55:58 +0000
+
+mutter (41.3-1ubuntu5) jammy; urgency=medium
+
+  * Revert catchsegv patch, now we have glibc-tools providing it
+
+ -- Gianfranco Costamagna <locutusofborg@debian.org>  Mon, 07 Feb 2022 15:50:43 +0100
+
+mutter (41.3-1ubuntu4) jammy; urgency=medium
+
+  * Drop catchsegv meson check. The binary has been removed from glibc
+  * Depend on sysprof, needed during build
+
+ -- Gianfranco Costamagna <locutusofborg@debian.org>  Mon, 07 Feb 2022 09:20:40 +0100
+
+mutter (41.3-1ubuntu2) jammy; urgency=medium
+
+  * Rebuild against against libwacom9.
+
+ -- Gianfranco Costamagna <locutusofborg@debian.org>  Sun, 06 Feb 2022 22:45:43 +0100
+
+mutter (41.3-1ubuntu1) jammy; urgency=medium
+
+  * Merge with debian, includes these upstream changes:
+    - window: Don't change workspaces of unmanaged windows (LP: #1933996)
+    - backend: Reset idletime when unplugging the power cable (LP: #1945121)
+    - clutter/text: Invalidate actor paint volume when it has changed
+      (LP: #1882291)
+    - backends/native: Ensure pointer is onscreen in input thread (LP: #1933186)
+    - OSK Enter, space and backspace keys don't work when typing in Greek
+      (LP: #1820523)
+    - window: Don't change workspaces of unmanaged windows (LP: #1932328)
+  * Remainig changes with debian:
+    - debian/gbp.conf: update upstream branch to point to ubuntu/master
+    - debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      + X11: Add support for fractional scaling using Randr
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Tue, 25 Jan 2022 04:07:12 +0100
 
 mutter (41.3-1) unstable; urgency=medium
 
@@ -2299,6 +3777,37 @@ mutter (41.0-1) experimental; urgency=medium
 
  -- Simon McVittie <smcv@debian.org>  Tue, 21 Sep 2021 18:44:18 +0100
 
+mutter (40.5-1ubuntu3) jammy; urgency=medium
+
+  [ Yuan-Chen Cheng ]
+  * d/p/mutter-wayland-seat-race-fix.patch:
+    - Fix Xwayland crash Xwayland crash in gdm as screen off and touchscreen
+      detach (cherry picked commits — LP: #1948894)
+
+  [ Marco Trevisan (Treviño) ]
+  * debian/patches: Refresh
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 03 Nov 2021 19:37:09 +0100
+
+mutter (40.5-1ubuntu2) impish; urgency=medium
+
+  [ Daniel van Vugt ]
+  * d/p/clutter-frame-clock-Remember-the-refresh-interval.patch,
+  * d/p/clutter-frame-clock-Apply-error-diff-to-dispatch-times.patch:
+    - Fix rendering smoothness on the Nvidia proprietary driver
+      (cherry picked commits — LP: #1946204)
+
+ -- Gunnar Hjalmarsson <gunnarhj@ubuntu.com>  Thu, 07 Oct 2021 15:30:02 +0200
+
+mutter (40.5-1ubuntu1) impish; urgency=medium
+
+  * Merge with debian, remaining changes:
+    - debian/gbp.conf: update upstream branch to point to ubuntu/master
+    - debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      + X11: Add support for fractional scaling using Randr
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Fri, 24 Sep 2021 21:26:36 +0200
+
 mutter (40.5-1) unstable; urgency=medium
 
   * New upstream release:
@@ -2339,12 +3848,32 @@ mutter (40.4-1) experimental; urgency=medium
 
  -- Simon McVittie <smcv@debian.org>  Tue, 31 Aug 2021 10:14:04 +0100
 
+mutter (40.2.1-1ubuntu1) impish; urgency=medium
+
+  * Merge with debian, containing new upstream version
+  * Remaining changes with debian:
+    - debian/gbp.conf: update upstream branch to point to ubuntu/master
+    - debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      + X11: Add support for fractional scaling using Randr
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 16 Jun 2021 01:40:19 +0200
+
 mutter (40.2.1-1) experimental; urgency=medium
 
   * New upstream release
   * debian/patches: Refresh
 
  -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 16 Jun 2021 01:36:22 +0200
+
+mutter (40.2-1ubuntu1) impish; urgency=medium
+
+  * Merge with debian, containing new upstream version
+  * Remaining changes with debian:
+    - debian/gbp.conf: update upstream branch to point to ubuntu/master
+    - debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      + X11: Add support for fractional scaling using Randr
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Tue, 15 Jun 2021 23:08:29 +0200
 
 mutter (40.2-1) experimental; urgency=medium
 
@@ -2362,6 +3891,18 @@ mutter (40.2-1) experimental; urgency=medium
     the contents.
 
  -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Tue, 15 Jun 2021 22:07:25 +0200
+
+mutter (40.1-1ubuntu1) impish; urgency=medium
+
+  * Merge with debian, containing new upstream version:
+    - Wayland input thread support (LP: #1690719)
+  * debian/patches: Refresh as per upstream changes
+  * Remaining changes with debian:
+    - debian/gbp.conf: update upstream branch to point to ubuntu/master
+    - debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      + X11: Add support for fractional scaling using Randr
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 02 Jun 2021 21:07:08 +0200
 
 mutter (40.1-1) experimental; urgency=medium
 
@@ -2433,6 +3974,46 @@ mutter (3.38.6-1) unstable; urgency=medium
 
  -- Simon McVittie <smcv@debian.org>  Thu, 26 Aug 2021 08:54:46 +0100
 
+mutter (3.38.4-1ubuntu2) hirsute; urgency=medium
+
+  [ Daniel van Vugt ]
+  * Revert "debian/patches: Properly handle configuration events on windows"
+    to fix a regression making some windows to move on resize (LP: #1922034).
+  * Add 61-mutter.rules-Enable-KMS-modifiers-for-Raspberry-P.patch.
+    To enable KMS modifiers on Raspberry Pi, which means to enable the
+    first fix in wayland-dma-buf-Add-support-for-DRM_FORMAT_ABGR2101010.patch
+    (LP: #1896171)
+
+  [ Marco Trevisan (Treviño) ]
+  * debian/patches: Backport workspace fixes from upstream gnome-3-38 branch
+  * debian/patches: Use Xwayland pkg-config if available
+  * debian/patches: Use -listenfd to invoke XWayland if available (LP: #1922539)
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 15 Apr 2021 06:28:51 +0200
+
+mutter (3.38.4-1ubuntu1) hirsute; urgency=medium
+
+  * Merge with debian, containing new upstream release.
+  * debian/tests: Adapt autopkgtest name and linked library to current soname
+  * debian/tests/control: Update references to libmutter-7-dev
+  * debian/patches: Remove Input Thread backport patches.
+    It has been fun, but we decided to revert this, so here it is.
+    (LP: #1918874, LP: #1919310)
+  * debian/control: Set breaks on gnome-shell 3.38.4.
+    That's the first version on which we'll remove the input thread patches
+  * debian/libmutter-7-0.symbols: Revert symbol changes due to input thread
+  * debian/patches: Add support for ABFR2101010 in v3d used by Raspberry Pi 4
+    (LP: #1896171)
+  * debian/patches: Handle NVIDIA's zero presentation times (LP: #1880086)
+  * debian/patches: Properly handle configuration events on windows
+    (LP: #191793)
+  * Remaining changes with debian:
+    - debian/gbp.conf: update upstream branch to point to ubuntu/master
+    - debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      + X11: Add support for fractional scaling using Randr
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Fri, 26 Mar 2021 07:17:54 +0100
+
 mutter (3.38.4-1) unstable; urgency=medium
 
   * Team upload
@@ -2476,6 +4057,32 @@ mutter (3.38.3-4) unstable; urgency=medium
 
  -- Simon McVittie <smcv@debian.org>  Tue, 09 Mar 2021 20:34:42 +0000
 
+mutter (3.38.3-3ubuntu2) hirsute; urgency=medium
+
+  [ Marco Trevisan (Treviño) ]
+  * debian/tests: Adapt autopkgtest name and linked library to current soname
+  * d/p/input-thread: Cherry-pick upstream commit to properly handle key modifiers
+    (LP: #1917926)
+  * d/p/input-thread: Cherry-pick more upstream input-related fixes
+  * d/p/input-thread: Ensure we handle device events in X11 (LP: #1917926)
+  * d/p/input-thread: Backport various X11 leak fixes
+  * d/p/input-thread: Avoid notifying property changes multiple times
+    (LP: #1918033)
+  * d/patches: Include a missing commit to fix X11 UI stutters
+
+  [ Simon McVittie ]
+  * d/patches: Update to commit 3.38.3-26-g30c542ddc
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 10 Mar 2021 04:48:22 +0100
+
+mutter (3.38.3-3ubuntu1) hirsute; urgency=medium
+
+  * debian/patches: Backport wayland input thread support (LP: #1690719)
+  * debian/libmutter-7-0.symbols: Sync as per private symbols changes
+  * debian/control: Set breaks on previous gnome-shell versions
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 25 Feb 2021 23:17:10 +0100
+
 mutter (3.38.3-3) unstable; urgency=medium
 
   * Team upload
@@ -2485,6 +4092,19 @@ mutter (3.38.3-3) unstable; urgency=medium
     - Fix drag-and-drop from X11 source to Wayland destination
 
  -- Simon McVittie <smcv@debian.org>  Tue, 23 Feb 2021 09:27:54 +0000
+
+mutter (3.38.3-2ubuntu1) hirsute; urgency=medium
+
+  * Merge with debian, containing new upstream release (LP: #1915025)
+    - Disable CRTCs when system becomes headless (LP: #1905825)
+    - Fixed crash during windows unmanagement (LP: #1870822)
+    - Do not handle ungrabbed events when unmanaging (LP: #1880405)
+    - Downgrade assert to warning when adding window (LP: #1911921)
+  * d/p/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+    - Refreshed
+  * debian/rules: Enable remote desktop for all linux builds (LP: #1730612)
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Tue, 09 Feb 2021 04:59:11 +0100
 
 mutter (3.38.3-2) unstable; urgency=medium
 
@@ -2509,6 +4129,16 @@ mutter (3.38.3-1) unstable; urgency=medium
   * New upstream release
 
  -- Simon McVittie <smcv@debian.org>  Thu, 14 Jan 2021 20:13:35 +0000
+
+mutter (3.38.2-1ubuntu1) hirsute; urgency=medium
+
+  * Merge with debian, containing new upstream release (LP: #1908158):
+    - Apply input device settings on hotplug / reconnect and resume
+      (LP: #1899206)
+  * d/p/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+    - Refreshed as per upstream changes
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Tue, 15 Dec 2020 01:20:01 +0100
 
 mutter (3.38.2-1) unstable; urgency=medium
 
@@ -2585,6 +4215,15 @@ mutter (3.38.1-3) experimental; urgency=medium
 
  -- Simon McVittie <smcv@debian.org>  Thu, 12 Nov 2020 18:17:44 +0000
 
+mutter (3.38.1-2ubuntu1) groovy; urgency=medium
+
+  * Merge with debian, including various upstream fixes. Remaining changes:
+    - debian/gbp.conf: update upstream branch to point to ubuntu/master
+    - debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      + X11: Add support for fractional scaling using Randr
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Fri, 23 Oct 2020 12:43:24 +0200
+
 mutter (3.38.1-2) unstable; urgency=medium
 
   * debian/patches: Wayland start Xwayland on public X11 sockets as well
@@ -2593,6 +4232,17 @@ mutter (3.38.1-2) unstable; urgency=medium
   * debian/patches: Fix resizing issues (LP: #1878293)
 
  -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Fri, 23 Oct 2020 12:38:01 +0200
+
+mutter (3.38.1-1ubuntu1) groovy; urgency=medium
+
+  * Merge with debian, including new upstream version, remaining changes:
+    - debian/gbp.conf: update upstream branch to point to ubuntu/master
+    - debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      + X11: Add support for fractional scaling using Randr
+  * d/p/clutter-backend-x11-Don-t-set-the-font-dpi-computed-on-X1.patch:
+    - Dropped, applied upstream
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Sun, 11 Oct 2020 02:13:27 +0200
 
 mutter (3.38.1-1) unstable; urgency=medium
 
@@ -2626,6 +4276,24 @@ mutter (3.38.0-2) unstable; urgency=medium
   * Revert "debian/watch: Watch unstable versions"
 
  -- Simon McVittie <smcv@debian.org>  Fri, 25 Sep 2020 10:53:27 +0100
+
+mutter (3.38.0-1ubuntu1) groovy; urgency=medium
+
+  * Merge with debian, including new upstream stable release, remaining changes:
+    - debian/gbp.conf: update upstream branch to point to ubuntu/master
+    - debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      + X11: Add support for fractional scaling using Randr
+  * d/p/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+    - Refresh as per upstream changes
+    - Don't update UI scale factor on xrandr-manager creation.
+      This would trigger settings initializations that are supposed to happen
+      after the clutter-x11 backend has been initialized, leading to saving
+      too early the cached font-dpi scaling, and then making clutter backend
+      to set a new (wrong) one. (LP: #1892440)
+  * d/p/clutter-backend-x11-Don-t-set-the-font-dpi-computed-on-X1.patch:
+    - Don't set the font-dpi on clutter-backend-x11 (LP: #1892440)
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 16 Sep 2020 14:06:53 +0200
 
 mutter (3.38.0-1) experimental; urgency=medium
 
@@ -2671,6 +4339,17 @@ mutter (3.37.92-1) experimental; urgency=medium
   * debian/libmutter-7-0.symbols: Update
 
  -- Simon McVittie <smcv@debian.org>  Tue, 08 Sep 2020 15:50:11 +0100
+
+mutter (3.37.91-1ubuntu1) groovy; urgency=medium
+
+  * Merge with debian, including new upstream stable release, remaining changes:
+    - debian/gbp.conf: update upstream branch to point to ubuntu/master
+    - debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      + X11: Add support for fractional scaling using Randr
+  * d/p/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+    - Refresh as per upstream changes
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Fri, 28 Aug 2020 01:10:32 +0200
 
 mutter (3.37.91-1) experimental; urgency=medium
 
@@ -2738,6 +4417,27 @@ mutter (3.36.5-1) unstable; urgency=medium
 
  -- Simon McVittie <smcv@debian.org>  Thu, 13 Aug 2020 10:19:59 +0100
 
+mutter (3.36.4-1ubuntu2) groovy; urgency=medium
+
+  * xrandr-scaling: Never try to set invalid screen sizes (LP: #1889090)
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Mon, 27 Jul 2020 16:44:52 +0200
+
+mutter (3.36.4-1ubuntu1) groovy; urgency=medium
+
+  * Merge with debian, including new upstream stable release, remaining changes:
+    - debian/control:
+      + Update VCS flags to point to ubuntu salsa branch
+    - debian/gbp.conf: update branch to point to ubuntu/master
+    - debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      + X11: Add support for fractional scaling using Randr
+  * debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+    - Don't export patch-only private symbol
+  * debian/libmutter-6-0.symbols:
+    - Remove ubuntu-only private symbol
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Mon, 20 Jul 2020 15:45:20 +0200
+
 mutter (3.36.4-1) unstable; urgency=medium
 
   * New upstream stable release (LP: #1887998)
@@ -2763,6 +4463,38 @@ mutter (3.36.4-1) unstable; urgency=medium
 
  -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Fri, 17 Jul 2020 21:12:56 +0200
 
+mutter (3.36.3-1ubuntu2) groovy; urgency=medium
+
+  * debian/control:
+    - Revert BD on adwaita-icon-theme 3.36.1-2ubuntu3. It was just temporary fix.
+  * d/p/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+    - Use pre-computed CRTC layout size for computing screen size (LP: #1874567,
+      LP: #1873403)
+    - Decouple the output mode from layout mode capabilities (LP: #1876894,
+      LP: #1886996)
+    - Ensure we notify CRTC changes on integer scaling changes (LP: #1876894)
+    - Apply proper layout monitor config when using fractional scaling
+      (LP: #1884754)
+    - Restore the fractional settings when reverting to fractional layout
+      (LP: #1886996)
+  * debian/libmutter-6-0.symbols: Add new private symbol
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Sat, 11 Jul 2020 00:44:33 +0200
+
+mutter (3.36.3-1ubuntu1) groovy; urgency=medium
+
+  * Merge with debian, including new stable upstream release
+  * debian/control: BD on adwaita-icon-theme 3.36.1-2ubuntu3.
+    This version includes all the window decoration icons that mutter uses
+  * Remaining changes with debian:
+    - debian/control:
+      + Update VCS flags to point to ubuntu salsa branch
+    - debian/gbp.conf: update branch to point to ubuntu/master
+    - debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      + X11: Add support for fractional scaling using Randr
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 04 Jun 2020 21:46:56 +0200
+
 mutter (3.36.3-1) unstable; urgency=medium
 
   * New upstream release (LP: #1881971)
@@ -2783,6 +4515,17 @@ mutter (3.36.2+12+gb425f1153-1) experimental; urgency=medium
     Drop patch, applied upstream
 
  -- Simon McVittie <smcv@debian.org>  Sat, 30 May 2020 15:12:09 +0100
+
+mutter (3.36.2-3ubuntu1) groovy; urgency=medium
+
+  * Merge with debian, remaining changes:
+    - debian/control:
+      + Update VCS flags to point to ubuntu salsa branch
+    - debian/gbp.conf: update branch to point to ubuntu/master
+    - debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      + X11: Add support for fractional scaling using Randr
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Fri, 29 May 2020 16:13:35 +0200
 
 mutter (3.36.2-3) unstable; urgency=medium
 
@@ -2809,6 +4552,22 @@ mutter (3.36.2-2) unstable; urgency=medium
     Fix a very common crash when running in X11 (LP: #1877075)
 
  -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Tue, 26 May 2020 21:41:05 +0200
+
+mutter (3.36.2-1ubuntu1) groovy; urgency=medium
+
+  * Merge with debian, including new upstream release:
+    - Fix super key not working with secondary layout (LP: #1871913)
+  * xrandr-scaling: Fix compiler warnings (LP: #1874207)
+  * xrandr-scaling: Take care of global UI scale when restoring from config
+    (LP: #1825593)
+  * Remaining changes with debian:
+    - debian/control:
+      + Update VCS flags to point to ubuntu salsa branch
+    - debian/gbp.conf: update branch to point to ubuntu/master
+    - debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      + X11: Add support for fractional scaling using Randr
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 07 May 2020 02:43:19 +0200
 
 mutter (3.36.2-1) unstable; urgency=medium
 
@@ -2868,6 +4627,45 @@ mutter (3.36.1-4) unstable; urgency=medium
 
  -- Simon McVittie <smcv@debian.org>  Fri, 10 Apr 2020 17:56:10 +0100
 
+mutter (3.36.1-3ubuntu3) focal; urgency=medium
+
+  * Ignore test failures on riscv64, like s390x, to unblock
+    gnome-settings-daemon etc.
+
+ -- William Grant <wgrant@ubuntu.com>  Fri, 17 Apr 2020 11:08:01 +1000
+
+mutter (3.36.1-3ubuntu2) focal; urgency=medium
+
+  * d/p/monitor-config-manager-Fallback-to-closed-laptop-lid-conf.patch:
+    -  Fallback to closed laptop lid configuration if no other available
+       (LP: #1793496)
+  * d/p/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+    - Don't override non-fractionally scaled monitors scaling (LP: #1873348)
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 16 Apr 2020 22:04:59 +0200
+
+mutter (3.36.1-3ubuntu1) focal; urgency=medium
+
+  * Merge with debian, with new upstream releases and cherry-picked fixes:
+    - Screens turn off when setting display scaling to 200% (LP: #1869750)
+    - Use hardware cursor for DisplayLink devices (LP: #1867757)
+    - Fix popup menus with using focus-follow-mouse (LP: #1871107)
+    - Window manager key events are sent to the terminal (LP: #1866094)
+    - Ensure assertion 'window->unmanaging || workspace != NULL' (LP: #1864326)
+    - Shell crash on meta_wayland_surface_role_get_window (LP: #1869837)
+  * d/p/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+    - Refreshed to respect upstream changes
+    - Fixed a bug causing windows using direct-rendering to be continuously
+      resized, keeping ability to use shell UI (LP: #1862081)
+  * Remaining changes with debian:
+    - debian/control:
+      + Update VCS flags to point to ubuntu salsa branch
+    - debian/gbp.conf: update branch to point to ubuntu/master
+    - debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      + X11: Add support for fractional scaling using Randr
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 09 Apr 2020 14:40:58 +0200
+
 mutter (3.34.4-1) unstable; urgency=medium
 
   * Team upload
@@ -2916,6 +4714,26 @@ mutter (3.36.1-1) experimental; urgency=medium
 
  -- Simon McVittie <smcv@debian.org>  Fri, 03 Apr 2020 14:23:52 +0100
 
+mutter (3.36.0-2ubuntu1) focal; urgency=medium
+
+  * Merge with debian. Remaining changes:
+    + debian/control:
+      - Update VCS flags to point to ubuntu salsa branch
+    + debian/gbp.conf: update branch to point to ubuntu/master
+    + debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      - X11: Add support for fractional scaling using Randr
+  * d/p/clutter-master-clock-default-Sync-timelines-to-hardware-v.patch:
+    - Improves smoothness and reduce input-to-output latency
+  * debian/libmutter-6-0.symbols:
+    - Update as per background mipmap levels patch symbol addition
+  * Ubuntu bugs resolved since 3.35.91-1ubuntu1:
+    - Higher than necessary CPU usage on mouse movement (LP: #1848951)
+    - No mouse cursor drawn for radeon in Wayland sessions (LP: #1867080)
+    - Restarting displays apps running on other workspaces (LP: #1819890)
+    - Volume/brightness OSD make fullscreen video flicker (LP: #1828697)
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 19 Mar 2020 15:51:05 +0000
+
 mutter (3.36.0-2) experimental; urgency=medium
 
   * control: Build against gnome-desktop 3.36 and break old gnome-shell. So we
@@ -2962,6 +4780,17 @@ mutter (3.35.92-1) experimental; urgency=medium
 
  -- Iain Lane <laney@debian.org>  Tue, 03 Mar 2020 16:34:25 +0000
 
+mutter (3.35.91-1ubuntu1) focal; urgency=medium
+
+  * Merge with debian. Remaining changes:
+    + debian/control:
+      - Update VCS flags to point to launchpad
+    + debian/gbp.conf: update branch to point to ubuntu/master
+    + debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      - X11: Add support for fractional scaling using Randr
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 26 Feb 2020 15:33:52 +0100
+
 mutter (3.35.91-1) experimental; urgency=medium
 
   * New upstream release
@@ -2990,6 +4819,17 @@ mutter (3.35.91-1) experimental; urgency=medium
 
  -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Mon, 24 Feb 2020 17:42:35 +0000
 
+mutter (3.34.3-1ubuntu1) focal; urgency=medium
+
+  * Merge with debian. Remaining changes:
+    + debian/control:
+      - Update VCS flags to point to launchpad
+    + debian/gbp.conf: update branch to point to ubuntu/master
+    + debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      - X11: Add support for fractional scaling using Randr
+
+ -- Iain Lane <iain.lane@canonical.com>  Mon, 06 Jan 2020 17:56:09 +0000
+
 mutter (3.34.3-1) unstable; urgency=medium
 
   * New upstream release
@@ -2998,6 +4838,17 @@ mutter (3.34.3-1) unstable; urgency=medium
 
  -- Iain Lane <laney@debian.org>  Mon, 06 Jan 2020 13:39:48 +0000
 
+mutter (3.34.2-2ubuntu1) focal; urgency=medium
+
+  * Merge with debian. Remaining changes:
+    + debian/control:
+      - Update VCS flags to point to launchpad
+    + debian/gbp.conf: update branch to point to ubuntu/master
+    + debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      - X11: Add support for fractional scaling using Randr
+
+ -- Iain Lane <iain.lane@canonical.com>  Sun, 22 Dec 2019 17:24:36 +0000
+
 mutter (3.34.2-2) unstable; urgency=medium
 
   * d/p/EGL-Include-EGL-eglmesaext.h.patch: Cherry pick from master. This
@@ -3005,6 +4856,24 @@ mutter (3.34.2-2) unstable; urgency=medium
     libglvnd, which has just happened in Debian.
 
  -- Iain Lane <laney@debian.org>  Sun, 22 Dec 2019 15:42:09 +0000
+
+mutter (3.34.2-1ubuntu1) focal; urgency=medium
+
+  * Merge with debian including new upstream version 3.34.2 (LP: #1857037):
+    - Fix an hang when using DisplayLink with Wayland (LP: #1853357)
+    - Kill window effects on destroy (LP: #1844222)
+    - Fixed a crash when using various Java apps such as Intellij (LP: #1845281)
+    - Fixed a crash when handling X11 events (LP: #1846403)
+    - Fixed some double-scaling in wayland
+    - More crash and hang fixes
+    Remaining changes:
+    + debian/control:
+      - Update VCS flags to point to launchpad
+    + debian/gbp.conf: update branch to point to ubuntu/master
+    + debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      - X11: Add support for fractional scaling using Randr
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Fri, 20 Dec 2019 17:17:53 +0000
 
 mutter (3.34.2-1) unstable; urgency=medium
 
@@ -3020,6 +4889,17 @@ mutter (3.34.2-1) unstable; urgency=medium
 
  -- Simon McVittie <smcv@debian.org>  Mon, 16 Dec 2019 16:55:47 +0000
 
+mutter (3.34.1+git20191107-1ubuntu1) focal; urgency=medium
+
+  * Merge with debian. Remaining changes:
+    + debian/control:
+      - Update VCS flags to point to launchpad
+    + debian/gbp.conf: update branch to point to ubuntu/master
+    + debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      - X11: Add support for fractional scaling using Randr
+
+ -- Iain Lane <iain.lane@canonical.com>  Thu, 07 Nov 2019 11:49:31 +0000
+
 mutter (3.34.1+git20191107-1) unstable; urgency=high
 
   * New upstream snapshot
@@ -3030,6 +4910,17 @@ mutter (3.34.1+git20191107-1) unstable; urgency=high
   * debian/libmutter-5-0.symbols: Add new symbol in this snapshot
 
  -- Iain Lane <laney@debian.org>  Thu, 07 Nov 2019 11:10:59 +0000
+
+mutter (3.34.1+git20191022-2ubuntu1) focal; urgency=medium
+
+  * Merge with debian. Remaining changes:
+    + debian/control:
+      - Update VCS flags to point to launchpad
+    + debian/gbp.conf: update branch to point to ubuntu/master
+    + debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      - X11: Add support for fractional scaling using Randr
+
+ -- Iain Lane <iain.lane@canonical.com>  Fri, 25 Oct 2019 18:07:31 +0100
 
 mutter (3.34.1+git20191022-2) unstable; urgency=medium
 
@@ -3057,6 +4948,18 @@ mutter (3.34.1-3) unstable; urgency=medium
   * Bump meson test timeout multiplier from 4 to 6 for armel
 
  -- Jeremy Bicha <jbicha@debian.org>  Sun, 20 Oct 2019 22:48:29 -0400
+
+mutter (3.34.1-1ubuntu1) eoan; urgency=medium
+
+  * Merge with debian. Remaining changes:
+    + debian/control:
+      - Update VCS flags to point to launchpad
+      - Update maintainer to ubuntu
+    + debian/gbp.conf: update branch to point to ubuntu/master
+    + debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      - X11: Add support for fractional scaling using Randr
+
+ -- Iain Lane <iain.lane@canonical.com>  Wed, 09 Oct 2019 12:18:44 +0100
 
 mutter (3.34.1-1) unstable; urgency=medium
 
@@ -3093,6 +4996,18 @@ mutter (3.34.0-4) unstable; urgency=medium
 
  -- Andreas Henriksson <andreas@fatal.se>  Mon, 30 Sep 2019 13:26:44 +0200
 
+mutter (3.34.0-3ubuntu1) eoan; urgency=medium
+
+  * Merge with debian. Remaining changes:
+    + debian/control:
+      - Update VCS flags to point to launchpad
+      - Update maintainer to ubuntu
+    + debian/gbp.conf: update branch to point to ubuntu/master
+    + debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      - X11: Add support for fractional scaling using Randr
+
+ -- Iain Lane <iain.lane@canonical.com>  Fri, 20 Sep 2019 16:32:18 +0100
+
 mutter (3.34.0-3) experimental; urgency=medium
 
   * d/p/clutter-*: Cherry-pick from upstream to fix a crash. During
@@ -3101,12 +5016,36 @@ mutter (3.34.0-3) experimental; urgency=medium
 
  -- Iain Lane <laney@debian.org>  Fri, 20 Sep 2019 16:08:03 +0100
 
+mutter (3.34.0-2ubuntu1) eoan; urgency=medium
+
+  * Merge with debian. Remaining changes:
+    + debian/control:
+      - Update VCS flags to point to launchpad
+      - Update maintainer to ubuntu
+    + debian/gbp.conf: update branch to point to ubuntu/master
+    + debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      - X11: Add support for fractional scaling using Randr
+
+ -- Iain Lane <iain.lane@canonical.com>  Fri, 13 Sep 2019 11:13:49 +0100
+
 mutter (3.34.0-2) experimental; urgency=medium
 
   * d/p/core-Split-x11-display-initialization-in-2-signals.patch: Cherry-pick.
     Fixes starting up of gsd-xsettings on Wayland. (LP: #1843107)
 
  -- Iain Lane <laney@debian.org>  Fri, 13 Sep 2019 11:10:15 +0100
+
+mutter (3.34.0-1ubuntu1) eoan; urgency=medium
+
+  * Merge with debian. Remaining changes:
+    + debian/control:
+      - Update VCS flags to point to launchpad
+      - Update maintainer to ubuntu
+    + debian/gbp.conf: update branch to point to ubuntu/master
+    + debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      - X11: Add support for fractional scaling using Randr
+
+ -- Iain Lane <iain.lane@canonical.com>  Tue, 10 Sep 2019 12:56:51 +0100
 
 mutter (3.34.0-1) experimental; urgency=medium
 
@@ -3144,6 +5083,19 @@ mutter (3.34.0-1) experimental; urgency=medium
 
  -- Iain Lane <laney@debian.org>  Tue, 10 Sep 2019 11:46:06 +0100
 
+mutter (3.33.92-1ubuntu1) eoan; urgency=medium
+
+  * Merge with debian. Remaining changes:
+    + debian/control:
+      - Update VCS flags to point to launchpad
+      - Update maintainer to ubuntu
+    + debian/gbp.conf: update branch to point to ubuntu/master
+    + debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      - X11: Add support for fractional scaling using Randr
+  * Refresh patch through gbp pq.
+
+ -- Iain Lane <iain.lane@canonical.com>  Thu, 05 Sep 2019 17:35:44 +0100
+
 mutter (3.33.92-1) experimental; urgency=medium
 
   * New upstream release
@@ -3166,6 +5118,23 @@ mutter (3.33.92-1) experimental; urgency=medium
     here. As a reminder, libmutter5 is not considered ABI stable until 3.34.0
 
  -- Iain Lane <laney@debian.org>  Thu, 05 Sep 2019 15:25:59 +0100
+
+mutter (3.33.91-1ubuntu1) eoan; urgency=medium
+
+  [ Iain Lane ]
+  * Merge with debian. Remaining changes:
+    + debian/control:
+      - Update VCS flags to point to launchpad
+      - Update maintainer to ubuntu
+    + debian/gbp.conf: update branch to point to ubuntu/master
+    + debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      - X11: Add support for fractional scaling using Randr
+
+  [ Marco Trevisan (Treviño) ]
+  * debian/patches: Refresh. Compositor is now a GObject, so we can use
+    smarter connection
+
+ -- Iain Lane <iain.lane@canonical.com>  Fri, 23 Aug 2019 21:02:03 +0100
 
 mutter (3.33.91-1) experimental; urgency=medium
 
@@ -3269,6 +5238,18 @@ mutter (3.33.4-1) experimental; urgency=medium
 
  -- Iain Lane <laney@debian.org>  Tue, 30 Jul 2019 18:16:52 +0100
 
+mutter (3.32.2+git20190711-2ubuntu1) eoan; urgency=medium
+
+  * Merge with debian. Remaining changes:
+    + debian/control:
+      - Update VCS flags to point to launchpad
+      - Update maintainer to ubuntu
+    + debian/gbp.conf: update branch to point to ubuntu/master
+    + debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      - X11: Add support for fractional scaling using Randr
+
+ -- Iain Lane <iain.lane@canonical.com>  Fri, 19 Jul 2019 16:59:08 +0100
+
 mutter (3.32.2+git20190711-2) experimental; urgency=medium
 
   * d/p/window-x11-Focus-a-window-in-the-active-workspace-as-take.patch:
@@ -3277,6 +5258,18 @@ mutter (3.32.2+git20190711-2) experimental; urgency=medium
     - Tests: don't wait too much after window destruction, causing failures
 
  -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Fri, 19 Jul 2019 16:55:02 +0100
+
+mutter (3.32.2+git20190711-1ubuntu1) eoan; urgency=medium
+
+  * Merge with debian. Remaining changes:
+    + debian/control:
+      - Update VCS flags to point to launchpad
+      - Update maintainer to ubuntu
+    + debian/gbp.conf: update branch to point to ubuntu/master
+    + debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      - X11: Add support for fractional scaling using Randr
+
+ -- Iain Lane <iain.lane@canonical.com>  Fri, 12 Jul 2019 14:23:04 +0100
 
 mutter (3.32.2+git20190711-1) experimental; urgency=medium
 
@@ -3290,6 +5283,18 @@ mutter (3.32.2+git20190711-1) experimental; urgency=medium
     - Revert dependency on meson 0.50.0
 
  -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Fri, 12 Jul 2019 14:11:53 +0100
+
+mutter (3.32.2+git20190626-1ubuntu1) eoan; urgency=medium
+
+  * Merge with debian (LP: #1834493). Remaining changes:
+    + debian/control:
+      - Update VCS flags to point to launchpad
+      - Update maintainer to ubuntu
+    + debian/gbp.conf: update branch to point to ubuntu/master
+    + debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      - X11: Add support for fractional scaling using Randr
+
+ -- Iain Lane <iain.lane@canonical.com>  Thu, 27 Jun 2019 15:58:31 +0100
 
 mutter (3.32.2+git20190626-1) experimental; urgency=medium
 
@@ -3306,6 +5311,18 @@ mutter (3.32.2+git20190626-1) experimental; urgency=medium
 
  -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Thu, 27 Jun 2019 13:02:32 +0100
 
+mutter (3.32.2-1ubuntu1) eoan; urgency=medium
+
+  * Merge with debian. Remaining changes:
+    + debian/control:
+      - Update VCS flags to point to launchpad
+      - Update maintainer to ubuntu
+    + debian/gbp.conf: update branch to point to ubuntu/master
+    + debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      - X11: Add support for fractional scaling using Randr
+
+ -- Iain Lane <iain.lane@canonical.com>  Tue, 21 May 2019 17:38:07 +0100
+
 mutter (3.32.2-1) experimental; urgency=medium
 
   * New upstream release
@@ -3319,6 +5336,24 @@ mutter (3.32.2-1) experimental; urgency=medium
     - Refreshed
 
  -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Tue, 21 May 2019 12:31:38 +0100
+
+mutter (3.32.1-2ubuntu1) eoan; urgency=medium
+
+  * Merge with debian
+    - Update to 3.32.1 upstream version (LP: #1826936)
+    - Fix applications aren't focused in Wayland session (LP: #1826176)
+    - Fix crash on hotplugging a dock with a monitor (LP: #1826182)
+    Remaining changes:
+    + debian/control:
+      - Update VCS flags to point to launchpad
+      - Update maintainer to ubuntu
+    + debian/gbp.conf: update branch to point to ubuntu/master
+    + debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      - X11: Add support for fractional scaling using Randr
+  * d/p/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+    - Fixed crash on calculation of global scale (LP: #1826933)
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 01 May 2019 11:08:08 +0100
 
 mutter (3.32.1-2) experimental; urgency=medium
 
@@ -3350,6 +5385,20 @@ mutter (3.32.0+git20190410-2) experimental; urgency=medium
 
  -- Iain Lane <laney@debian.org>  Sun, 14 Apr 2019 11:11:22 +0100
 
+mutter (3.32.0+git20190410-1ubuntu1) disco; urgency=medium
+
+  * Merge with debian git snapshot (LP: #1820542), remaining changes:
+    + debian/control:
+      - Update VCS flags to point to launchpad
+      - Update maintainer to ubuntu
+    + debian/gbp.conf: update branch to point to ubuntu/master
+    + debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+      - X11: Add support for fractional scaling using Randr
+  * d/p/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+    - Refreshed.
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 10 Apr 2019 20:12:29 -0500
+
 mutter (3.32.0+git20190410-1) experimental; urgency=medium
 
   * New upstream snapshot up to commit
@@ -3375,6 +5424,30 @@ mutter (3.32.0+git20190410-1) experimental; urgency=medium
     a direct BD on the providers. Thanks, Lintian.
 
  -- Iain Lane <laney@debian.org>  Wed, 10 Apr 2019 16:36:23 +0100
+
+mutter (3.32.0-1ubuntu2) disco; urgency=medium
+
+  * debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+    - Don't invert the screen size when rotation is enabled (LP: #1822513)
+    - Remove unneeded cleanup changes
+    - Use xcb checked function to set scaling to catch errors
+    - Update screen size only after monitors modes have been derived
+      (LP: #1822616)
+    - Trigger a monitors rebuild only if scale has changed (LP: #1823485)
+    - Only update UI scaling when output scaling is enabled (LP: #1822478)
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 03 Apr 2019 19:19:59 -0400
+
+mutter (3.32.0-1ubuntu1) disco; urgency=medium
+
+  * debian/control:
+    - Update VCS flags to point to launchpad
+    - Update maintainer to ubuntu
+  * debian/gbp.conf: update branch to point to ubuntu/master
+  * debian/patches/x11-Add-support-for-fractional-scaling-using-Randr.patch:
+    - X11: Add support for fractional scaling using Randr (LP: #1820850)
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 27 Mar 2019 06:48:11 +0100
 
 mutter (3.32.0-1) experimental; urgency=medium
 

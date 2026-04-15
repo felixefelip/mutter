@@ -1,0 +1,109 @@
+From: Alessandro Astone <alessandro.astone@canonical.com>
+Date: Wed, 18 Mar 2026 14:41:37 +0100
+Subject: keyboard-a11y: Unlatch sticky modifiers on CLUTTER_BUTTON_RELEASE
+
+The expectation with sticky keys is that latched modifiers get unset after
+a mouse button release, similarly to a non-modifier key press.
+
+Forwarded: https://gitlab.gnome.org/GNOME/mutter/-/merge_requests/4986
+Bug-Ubuntu: https://launchpad.net/bugs/2131889
+---
+ src/backends/native/meta-keyboard-a11y.c | 28 ++++++++++++++++++++++++++++
+ src/backends/native/meta-keyboard-a11y.h |  3 +++
+ src/backends/native/meta-seat-impl.c     | 21 +++++++++++++++++++++
+ 3 files changed, 52 insertions(+)
+
+diff --git a/src/backends/native/meta-keyboard-a11y.c b/src/backends/native/meta-keyboard-a11y.c
+index f7fa214..cd2a574 100644
+--- a/src/backends/native/meta-keyboard-a11y.c
++++ b/src/backends/native/meta-keyboard-a11y.c
+@@ -542,6 +542,18 @@ handle_stickykeys_release (ClutterEvent     *event,
+                                    new_latched_mask, new_locked_mask);
+ }
+ 
++static gboolean
++handle_stickykeys_mouse_release (ClutterEvent     *event,
++                                 MetaKeyboardA11y *keyboard_a11y)
++{
++  if (!keyboard_a11y->stickykeys_latched_mask)
++    return FALSE;
++
++  update_internal_xkb_state (keyboard_a11y, 0, keyboard_a11y->stickykeys_locked_mask);
++  keyboard_a11y->stickykeys_latched_mask = 0;
++  return TRUE;
++}
++
+ static gboolean
+ trigger_toggle_slowkeys (gpointer user_data)
+ {
+@@ -1238,3 +1250,19 @@ meta_keyboard_a11y_process_event_in_impl (MetaKeyboardA11y  *keyboard_a11y,
+ 
+   return FALSE;
+ }
++
++gboolean meta_keyboard_a11y_process_mouse_event_in_impl (MetaKeyboardA11y  *keyboard_a11y,
++                                                         ClutterEvent      *event)
++{
++  ClutterEventType event_type;
++
++  event_type = clutter_event_type (event);
++
++  if (keyboard_a11y->a11y_flags & META_A11Y_STICKY_KEYS_ENABLED)
++    {
++      if (event_type == CLUTTER_BUTTON_RELEASE)
++        return handle_stickykeys_mouse_release (event, keyboard_a11y);
++    }
++
++  return FALSE;
++}
+diff --git a/src/backends/native/meta-keyboard-a11y.h b/src/backends/native/meta-keyboard-a11y.h
+index 182b22c..15e52f2 100644
+--- a/src/backends/native/meta-keyboard-a11y.h
++++ b/src/backends/native/meta-keyboard-a11y.h
+@@ -34,3 +34,6 @@ void meta_keyboard_a11y_maybe_notify_toggle_keys_in_impl (MetaKeyboardA11y *keyb
+ gboolean meta_keyboard_a11y_process_event_in_impl (MetaKeyboardA11y  *keyboard_a11y,
+                                                    ClutterEvent      *event,
+                                                    ClutterEvent     **out_event);
++
++gboolean meta_keyboard_a11y_process_mouse_event_in_impl (MetaKeyboardA11y  *keyboard_a11y,
++                                                         ClutterEvent      *event);
+diff --git a/src/backends/native/meta-seat-impl.c b/src/backends/native/meta-seat-impl.c
+index 2376682..d13be4f 100644
+--- a/src/backends/native/meta-seat-impl.c
++++ b/src/backends/native/meta-seat-impl.c
+@@ -1003,6 +1003,7 @@ meta_seat_impl_notify_button_in_impl (MetaSeatImpl       *seat_impl,
+       CLUTTER_BUTTON4_MASK, CLUTTER_BUTTON5_MASK, 0, 0, 0
+     };
+   int button_count;
++  gboolean xkb_changed;
+ 
+   /* Drop any repeated button press (for example from virtual devices. */
+   button_count = update_button_count (seat_impl, evdev_button, state);
+@@ -1099,7 +1100,27 @@ meta_seat_impl_notify_button_in_impl (MetaSeatImpl       *seat_impl,
+                               evdev_button,
+                               NULL);
+ 
++  xkb_changed =
++    meta_keyboard_a11y_process_mouse_event_in_impl (seat_impl->keyboard_a11y,
++                                                    event);
++
++  if (xkb_changed)
++    meta_keymap_native_update_in_impl (seat_impl->keymap,
++                                       seat_impl->xkb);
++
+   queue_event (seat_impl, event);
++
++  if (xkb_changed)
++    {
++      ClutterEvent *state_event;
++
++      state_event = meta_key_state_event_new (input_device,
++                                              CLUTTER_EVENT_NONE,
++                                              seat_impl->xkb,
++                                              seat_impl->button_state,
++                                              time_us);
++      queue_event (seat_impl, state_event);
++    }
+ }
+ 
+ static MetaSeatImpl *

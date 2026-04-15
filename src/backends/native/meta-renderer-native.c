@@ -133,7 +133,7 @@ struct _MetaWinsysEgl
 
 enum
 {
-  PROP_WINSYS_EGL_0,
+  PROP_0,
   PROP_WINSYS_EGL_RENDERER,
   N_WINSYS_EGL_PROPS
 };
@@ -921,7 +921,7 @@ static void
 mode_sets_update_result_feedback (const MetaKmsFeedback *kms_feedback,
                                   gpointer               user_data)
 {
-  const GError *feedback_error;
+  const GError *feedback_error = NULL;
 
   feedback_error = meta_kms_feedback_get_error (kms_feedback);
   if (feedback_error &&
