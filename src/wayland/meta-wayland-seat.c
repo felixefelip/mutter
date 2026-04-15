@@ -726,3 +726,12 @@ meta_wayland_seat_get_cursor (MetaWaylandSeat *seat,
   else
     return NULL;
 }
+
+void
+meta_wayland_seat_maybe_update_modifiers (MetaWaylandSeat *seat)
+{
+  if (!meta_wayland_seat_has_keyboard (seat))
+    return;
+
+  meta_wayland_keyboard_maybe_update_modifiers (seat->keyboard);
+}
