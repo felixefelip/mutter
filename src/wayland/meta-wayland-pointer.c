@@ -756,7 +756,9 @@ handle_button_event (MetaWaylandPointer *pointer,
                      const ClutterEvent *event)
 {
   gboolean implicit_grab;
+  MetaWaylandSeat *seat;
 
+  seat = meta_wayland_pointer_get_seat (pointer);
   implicit_grab = (clutter_event_type (event) == CLUTTER_BUTTON_PRESS) && (count_buttons (event) == 1);
   if (implicit_grab)
     {
@@ -768,11 +770,9 @@ handle_button_event (MetaWaylandPointer *pointer,
   meta_wayland_pointer_send_button (pointer, event);
 
   if (implicit_grab)
-    {
-      MetaWaylandSeat *seat = meta_wayland_pointer_get_seat (pointer);
+    pointer->grab_serial = wl_display_get_serial (seat->wl_display);
 
-      pointer->grab_serial = wl_display_get_serial (seat->wl_display);
-    }
+  meta_wayland_seat_maybe_update_modifiers (seat);
 }
 
 static gboolean
