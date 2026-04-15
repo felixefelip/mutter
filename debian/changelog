@@ -1,3 +1,15 @@
+mutter (50.1-0ubuntu2) resolute; urgency=medium
+
+  * d/p/ubuntu/workspace: De-prioritize focusing desktop windows.
+    In ubuntu we use a desktop extension by default, that is not used
+    upstream, while it can handle most of the WM changes, there are some
+    situations in which the desktop still gets wrongly focused, such as when
+    using the Ctrl+Alt+Tab a11y switcher, as it's being considered a "normal"
+    window. Fix this by ensuring that the desktop is the latest window to be
+    focused, unless explicitly requested. (LP: #2148490)
+
+ -- Marco Trevisan (Treviño) <marco@ubuntu.com>  Wed, 15 Apr 2026 20:20:33 +0200
+
 mutter (50.1-0ubuntu1) resolute; urgency=medium
 
   [ Daniel van Vugt ]

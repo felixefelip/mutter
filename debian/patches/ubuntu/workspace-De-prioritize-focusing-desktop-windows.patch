@@ -1,0 +1,119 @@
+From: =?utf-8?b?Ik1hcmNvIFRyZXZpc2FuIChUcmV2acOxbyki?= <mail@3v1n0.net>
+Date: Thu, 9 Apr 2026 02:33:13 +0200
+Subject: workspace: De-prioritize focusing desktop windows
+
+When meta_workspace_focus_default_window() is used with a desktop window
+we may end up focusing the desktop, even if there are actually focusable
+windows around.
+In fact the desktop window should be only considered focusable if there
+are no other windows visible or if it's explicitly focused.
+
+This is a problem when using `Ctrl+Alt+Tab` in the shell, because once a
+a desktop window is explicitly selected, then it's impossible to set the
+focus back to the windows using the same switcher, due to the desktop
+window being considered just another element of the windows group that
+can be focused when using `meta_display_focus_default_window()`.
+
+So, modify all the workspace focus-related functions so that a desktop
+window, if any, is always returned as the last choice.
+
+Not changing the way we build the MRU list, since it's still meant to be
+a list where windows are ordered by recently used state.
+
+Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/mutter/+bug/2148490
+Origin: https://gitlab.gnome.org/GNOME/mutter/-/merge_requests/5016
+---
+ src/core/workspace.c | 33 ++++++++++++++++++++++++++++++++-
+ 1 file changed, 32 insertions(+), 1 deletion(-)
+
+diff --git a/src/core/workspace.c b/src/core/workspace.c
+index 1e6cb5d..92e0582 100644
+--- a/src/core/workspace.c
++++ b/src/core/workspace.c
+@@ -1461,6 +1461,7 @@ meta_workspace_get_default_focus_candidates (MetaWorkspace *workspace)
+ {
+   GList *l;
+   GList *candidates = NULL;
++  MetaWindow *desktop_window = NULL;
+ 
+   for (l = workspace->mru_list; l; l = l->next)
+     {
+@@ -1471,9 +1472,20 @@ meta_workspace_get_default_focus_candidates (MetaWorkspace *workspace)
+       if (!is_focusable (window, workspace))
+         continue;
+ 
++      if (window->type == META_WINDOW_DESKTOP)
++        {
++          if (!desktop_window)
++            desktop_window = window;
++
++          continue;
++        }
++
+       candidates = g_list_prepend (candidates, window);
+     }
+ 
++  if (!candidates && desktop_window)
++    candidates = g_list_prepend (candidates, desktop_window);
++
+   return candidates;
+ }
+ 
+@@ -1498,6 +1510,7 @@ meta_workspace_get_default_focus_window_at_point (MetaWorkspace *workspace,
+   g_autoptr (GList) sorted = NULL;
+   GList *l;
+   MetaStack *stack;
++  MetaWindow *desktop_window = NULL;
+ 
+   g_return_val_if_fail (META_IS_WORKSPACE (workspace), NULL);
+   g_return_val_if_fail (!not_this_one || META_IS_WINDOW (not_this_one), NULL);
+@@ -1524,12 +1537,22 @@ meta_workspace_get_default_focus_window_at_point (MetaWorkspace *workspace,
+       if (!is_focusable (window, workspace))
+         continue;
+ 
++      if (window->type == META_WINDOW_DESKTOP)
++        {
++          if (!desktop_window)
++            desktop_window = window;
++          continue;
++        }
++
+       if (!window_contains_point (window, root_x, root_y))
+         continue;
+ 
+       return window;
+     }
+ 
++  if (desktop_window && window_contains_point (desktop_window, root_x, root_y))
++    return desktop_window;
++
+   return NULL;
+ }
+ 
+@@ -1538,6 +1561,7 @@ meta_workspace_get_default_focus_window (MetaWorkspace *workspace,
+                                          MetaWindow    *not_this_one)
+ {
+   GList *l;
++  MetaWindow *desktop_window = NULL;
+ 
+   g_return_val_if_fail (META_IS_WORKSPACE (workspace), NULL);
+   g_return_val_if_fail (!not_this_one || META_IS_WINDOW (not_this_one), NULL);
+@@ -1554,10 +1578,17 @@ meta_workspace_get_default_focus_window (MetaWorkspace *workspace,
+       if (!is_focusable (window, workspace))
+         continue;
+ 
++      if (window->type == META_WINDOW_DESKTOP)
++        {
++          if (!desktop_window)
++            desktop_window = window;
++          continue;
++        }
++
+       return window;
+     }
+ 
+-  return NULL;
++  return desktop_window;
+ }
+ 
+ static MetaWindow *

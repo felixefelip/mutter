@@ -10,3 +10,4 @@ ubuntu/keyboard-a11y-Unlatch-sticky-modifiers-on-CLUTTER_BUTTON_.patch
 ubuntu/wayland-Notify-modifiers-after-pointer-button-events.patch
 ubuntu/window-Use-snapd-socket-to-get-the-application-ID.patch
 ubuntu/clutter-frame-clock-Don-t-skip-the-next-frame.patch
+ubuntu/workspace-De-prioritize-focusing-desktop-windows.patch
