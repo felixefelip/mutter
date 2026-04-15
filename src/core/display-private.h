@@ -24,6 +24,11 @@
 
 #pragma once
 
+#include "config.h"
+#ifdef HAVE_SNAPD_SUPPORT
+#include <libsoup/soup.h>
+#endif
+
 #include "meta/display.h"
 
 #include <glib.h>
@@ -156,6 +161,10 @@ struct _MetaDisplay
   gchar *saved_clipboard_mimetype;
   MetaSelection *selection;
   GCancellable *saved_clipboard_cancellable;
+
+#ifdef HAVE_SNAPD_SUPPORT
+  SoupSession *snapd_session;
+#endif
 };
 
 struct _MetaDisplayClass
