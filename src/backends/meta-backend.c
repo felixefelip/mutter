@@ -2168,12 +2168,19 @@ meta_backend_get_cursor (MetaBackend       *backend,
                          ClutterCursorType  cursor_type)
 {
   MetaCursorTracker *cursor_tracker = meta_backend_get_cursor_tracker (backend);
-  ClutterCursorType global_cursor = CLUTTER_CURSOR_INHERIT;
-
-  g_signal_emit (backend, signals[OVERRIDE_CURSOR], 0, &global_cursor);
+  ClutterCursorType global_cursor = meta_backend_get_global_cursor_type (backend);
 
   if (global_cursor != CLUTTER_CURSOR_INHERIT)
     cursor_type = global_cursor;
 
   return CLUTTER_CURSOR (meta_cursor_xcursor_get (cursor_type, cursor_tracker));
+}
+
+ClutterCursorType
+meta_backend_get_global_cursor_type (MetaBackend *backend)
+{
+  ClutterCursorType global_cursor = CLUTTER_CURSOR_INHERIT;
+
+  g_signal_emit (backend, signals[OVERRIDE_CURSOR], 0, &global_cursor);
+  return global_cursor;
 }

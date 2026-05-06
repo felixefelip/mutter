@@ -107,6 +107,8 @@ struct _ClutterBackendClass
   ClutterCursor * (* get_cursor) (ClutterBackend    *backend,
                                   ClutterCursorType  cursor_type);
 
+  ClutterCursorType (* get_global_cursor_type) (ClutterBackend *backend);
+
   /* signals */
   void (* resolution_changed) (ClutterBackend *backend);
 };
@@ -136,6 +138,9 @@ gboolean clutter_backend_foreach_sprite (ClutterBackend               *backend,
 CLUTTER_EXPORT
 ClutterCursor * clutter_backend_get_cursor (ClutterBackend    *backend,
                                             ClutterCursorType  cursor_type);
+
+CLUTTER_EXPORT
+ClutterCursorType clutter_backend_get_global_cursor_type (ClutterBackend *backend);
 
 CLUTTER_EXPORT
 void clutter_backend_destroy (ClutterBackend *backend);
