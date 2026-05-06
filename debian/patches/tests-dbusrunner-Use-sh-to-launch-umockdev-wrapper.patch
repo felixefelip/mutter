@@ -1,0 +1,36 @@
+From: =?utf-8?b?Ik1hcmNvIFRyZXZpc2FuIChUcmV2acOxbyki?= <mail@3v1n0.net>
+Date: Wed, 22 Apr 2026 00:33:22 +0200
+Subject: tests/dbusrunner: Use sh to launch umockdev-wrapper
+
+This allows to META_DBUS_RUNNER_WRAPPER={gdb,rr} to work again
+
+Part-of: <https://gitlab.gnome.org/GNOME/mutter/-/merge_requests/5038>
+
+Origin: https://gitlab.gnome.org/GNOME/mutter/-/commit/e14c662
+Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/stonking/+source/mutter/+bug/2148655
+---
+ src/tests/mutter_dbusrunner.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/tests/mutter_dbusrunner.py b/src/tests/mutter_dbusrunner.py
+index 215ab8a..992e852 100644
+--- a/src/tests/mutter_dbusrunner.py
++++ b/src/tests/mutter_dbusrunner.py
+@@ -16,7 +16,7 @@ from collections import OrderedDict
+ from dbusmock import DBusTestCase
+ from dbus.mainloop.glib import DBusGMainLoop
+ from pathlib import Path
+-from gi.repository import Gio
++from gi.repository import GLib
+ 
+ 
+ class MultiOrderedDict(OrderedDict):
+@@ -276,7 +276,7 @@ def run_test(args, extra_env):
+     wrapper = os.getenv('META_DBUS_RUNNER_WRAPPER')
+ 
+     if not os.getenv('META_DBUS_RUNNER_DISABLE_UMOCKDEV'):
+-        args = ['umockdev-wrapper'] + args
++        args = ['sh', GLib.find_program_in_path('umockdev-wrapper')] + args
+ 
+     if wrapper == 'gdb':
+         args = ['gdb', '-ex', 'r', '-ex', 'bt full', '--args'] + args

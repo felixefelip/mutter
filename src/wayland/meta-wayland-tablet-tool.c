@@ -121,11 +121,18 @@ move_resources_for_client (struct wl_list   *destination,
     }
 }
 
+static ClutterCursor *
+meta_wayland_tablet_tool_get_xcursor (MetaWaylandTabletTool *tool, ClutterCursorType shape)
+{
+  MetaBackend *backend = backend_from_tool (tool);
+  MetaCursorTracker *cursor_tracker = meta_backend_get_cursor_tracker (backend);
+
+  return CLUTTER_CURSOR (meta_cursor_xcursor_get (shape, cursor_tracker));
+}
+
 static void
 meta_wayland_tablet_tool_update_cursor (MetaWaylandTabletTool *tool)
 {
-  MetaBackend *backend = backend_from_tool (tool);
-  ClutterBackend *clutter_backend = meta_backend_get_clutter_backend (backend);
   g_autoptr (ClutterCursor) cursor = NULL;
 
   if (tool->focus_surface)
@@ -143,13 +150,13 @@ meta_wayland_tablet_tool_update_cursor (MetaWaylandTabletTool *tool)
             }
           else
             {
-              cursor = clutter_backend_get_cursor (clutter_backend,
-                                                   CLUTTER_CURSOR_NONE);
+              cursor = meta_wayland_tablet_tool_get_xcursor (tool,
+                                                             CLUTTER_CURSOR_NONE);
             }
           break;
         case CURSOR_SOURCE_SHAPE:
-          cursor = clutter_backend_get_cursor (clutter_backend,
-                                               tool->cursor_shape);
+          cursor = meta_wayland_tablet_tool_get_xcursor (tool,
+                                                         tool->cursor_shape);
           break;
         case CURSOR_SOURCE_UNSET:
           cursor = NULL;
@@ -158,8 +165,8 @@ meta_wayland_tablet_tool_update_cursor (MetaWaylandTabletTool *tool)
     }
   else if (tool->current)
     {
-      cursor = clutter_backend_get_cursor (clutter_backend,
-                                           CLUTTER_CURSOR_DEFAULT);
+      cursor = meta_wayland_tablet_tool_get_xcursor (tool,
+                                                     CLUTTER_CURSOR_DEFAULT);
     }
 
   if (g_set_object (&tool->cursor, cursor))

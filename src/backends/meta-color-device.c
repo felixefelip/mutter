@@ -94,6 +94,9 @@ G_DEFINE_TYPE (MetaColorDevice, meta_color_device,
 
 static const char *efivar_test_path = NULL;
 
+static void setup_created_cd_device (MetaColorDevice *color_device,
+                                     CdDevice        *cd_device);
+
 /*
  * Generate a colord DeviceId according to
  * `device-and-profiling-naming-spec.txt`.
@@ -496,14 +499,40 @@ ensure_device_profile_cb (GObject      *source_object,
 }
 
 static void
+on_cd_device_found (GObject      *object,
+                    GAsyncResult *res,
+                    gpointer      user_data)
+{
+  g_autoptr (GError) error = NULL;
+  MetaColorDevice *color_device = user_data;
+  CdDevice *cd_device;
+
+  cd_device = cd_client_find_device_finish (CD_CLIENT (object), res, &error);
+  if (!cd_device)
+    {
+      if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+        return;
+
+      g_warning ("Failed to find existing colord device for '%s': %s",
+                 color_device->cd_device_id,
+                 error->message);
+      meta_color_device_notify_ready (color_device, FALSE);
+      return;
+    }
+
+  meta_topic (META_DEBUG_COLOR,
+              "Reusing existing colord device '%s'",
+              color_device->cd_device_id);
+  setup_created_cd_device (color_device, cd_device);
+}
+
+static void
 on_cd_device_created (GObject      *object,
                       GAsyncResult *res,
                       gpointer      user_data)
 {
   CdClient *cd_client = CD_CLIENT (object);
   MetaColorDevice *color_device = user_data;
-  MetaColorManager *color_manager;
-  MetaColorStore *color_store;
   CdDevice *cd_device;
   g_autoptr (GError) error = NULL;
 
@@ -513,12 +542,36 @@ on_cd_device_created (GObject      *object,
       if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
         return;
 
+      if (g_error_matches (error, CD_CLIENT_ERROR, CD_CLIENT_ERROR_ALREADY_EXISTS))
+        {
+          meta_topic (META_DEBUG_COLOR,
+                      "Colord device '%s' already exists, looking it up",
+                      color_device->cd_device_id);
+
+          cd_client_find_device (cd_client,
+                                 color_device->cd_device_id,
+                                 color_device->cancellable,
+                                 on_cd_device_found,
+                                 color_device);
+          return;
+        }
+
       g_warning ("Failed to create colord device for '%s': %s",
                  color_device->cd_device_id,
                  error->message);
       meta_color_device_notify_ready (color_device, FALSE);
       return;
     }
+
+  setup_created_cd_device (color_device, cd_device);
+}
+
+static void
+setup_created_cd_device (MetaColorDevice *color_device,
+                         CdDevice        *cd_device)
+{
+  MetaColorManager *color_manager;
+  MetaColorStore *color_store;
 
   color_device->cd_device = cd_device;
 

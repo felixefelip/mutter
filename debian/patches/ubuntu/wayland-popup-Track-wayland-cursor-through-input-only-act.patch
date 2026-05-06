@@ -1,0 +1,171 @@
+From: Alessandro Astone <alessandro.astone@canonical.com>
+Date: Fri, 17 Apr 2026 10:26:55 +0200
+Subject: wayland/popup: Track wayland cursor through input-only actor grab
+
+Mapping an xdg-popup results in clutter creating and grabbing an input-only
+actor with no descendant relation with the popup surface actor. That breaks
+the logic to resolve cursors based on the current active grab.
+
+Here we implement the ClutterActor::get_cursor_for_sprite vfunc for
+Clutter.InputOnlyActor which queries the cursor of a foreign actor which can
+be set externally from the MetaWaylandPopup.
+
+Forwarded: https://gitlab.gnome.org/GNOME/mutter/-/merge_requests/5032
+Bug-Ubuntu: https://launchpad.net/bugs/2148481
+---
+ clutter/clutter/clutter-input-only-actor.c | 96 ++++++++++++++++++++++++++++++
+ src/wayland/meta-wayland-popup.c           | 10 ++++
+ 2 files changed, 106 insertions(+)
+
+diff --git a/clutter/clutter/clutter-input-only-actor.c b/clutter/clutter/clutter-input-only-actor.c
+index 7165dcc..ff9a331 100644
+--- a/clutter/clutter/clutter-input-only-actor.c
++++ b/clutter/clutter/clutter-input-only-actor.c
+@@ -23,19 +23,115 @@
+ 
+ #include "clutter/clutter-input-only-actor.h"
+ 
++#include "clutter/clutter/clutter-actor-private.h"
+ #include "clutter/clutter-input-only-action.h"
+ 
+ struct _ClutterInputOnlyActor
+ {
+   ClutterActor parent;
++
++  ClutterActor *actor_for_cursor;
++};
++
++enum
++{
++  PROP_0,
++
++  PROP_ACTOR_FOR_CURSOR,
++
++  PROP_LAST
+ };
+ 
++static GParamSpec *obj_props[PROP_LAST];
++
+ G_DEFINE_TYPE (ClutterInputOnlyActor, clutter_input_only_actor,
+                CLUTTER_TYPE_ACTOR)
+ 
++static ClutterCursor *
++clutter_input_only_actor_get_cursor_for_sprite (ClutterActor *actor,
++                                                ClutterSprite *sprite)
++{
++  ClutterInputOnlyActor *input_only_actor = CLUTTER_INPUT_ONLY_ACTOR (actor);
++  ClutterActorClass *parent_class = CLUTTER_ACTOR_CLASS (clutter_input_only_actor_parent_class);
++
++  if (!input_only_actor->actor_for_cursor)
++    return parent_class->get_cursor_for_sprite (actor, sprite);
++
++  return clutter_actor_get_cursor_for_sprite (input_only_actor->actor_for_cursor,
++                                              sprite);
++}
++
++static void
++clutter_input_only_actor_set_property (GObject      *object,
++                                       guint         prop_id,
++                                       const GValue *value,
++                                       GParamSpec   *pspec)
++{
++  ClutterInputOnlyActor *input_only_actor = CLUTTER_INPUT_ONLY_ACTOR (object);
++
++  switch (prop_id)
++    {
++    case PROP_ACTOR_FOR_CURSOR:
++      g_set_object (&input_only_actor->actor_for_cursor,
++                    g_value_get_object (value));
++      break;
++    default:
++      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
++      break;
++    }
++}
++
++static void
++clutter_input_only_actor_get_property (GObject    *object,
++                                       guint       prop_id,
++                                       GValue     *value,
++                                       GParamSpec *pspec)
++{
++  ClutterInputOnlyActor *input_only_actor = CLUTTER_INPUT_ONLY_ACTOR (object);
++
++  switch (prop_id)
++    {
++    case PROP_ACTOR_FOR_CURSOR:
++      g_value_set_object (value, input_only_actor->actor_for_cursor);
++      break;
++    default:
++      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
++      break;
++    }
++}
++
++static void
++clutter_input_only_actor_finalize (GObject *object)
++{
++  ClutterInputOnlyActor *input_only_actor = CLUTTER_INPUT_ONLY_ACTOR (object);
++
++  g_clear_object (&input_only_actor->actor_for_cursor);
++
++  G_OBJECT_CLASS (clutter_input_only_actor_parent_class)->finalize (object);
++}
++
+ static void
+ clutter_input_only_actor_class_init (ClutterInputOnlyActorClass *klass)
+ {
++  ClutterActorClass *actor_class = CLUTTER_ACTOR_CLASS (klass);
++  GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
++
++  actor_class->get_cursor_for_sprite = clutter_input_only_actor_get_cursor_for_sprite;
++
++  obj_props[PROP_ACTOR_FOR_CURSOR] =
++    g_param_spec_object ("actor-for-cursor",
++                         "Actor for Cursor",
++                         "The actor to use for determining the cursor when the pointer is grabbed by this input-only actor",
++                         CLUTTER_TYPE_ACTOR,
++                         G_PARAM_READWRITE |
++                         G_PARAM_STATIC_STRINGS);
++
++  gobject_class->finalize = clutter_input_only_actor_finalize;
++  gobject_class->set_property = clutter_input_only_actor_set_property;
++  gobject_class->get_property = clutter_input_only_actor_get_property;
++  g_object_class_install_properties (gobject_class,
++                                     PROP_LAST,
++                                     obj_props);
+ }
+ 
+ static void
+diff --git a/src/wayland/meta-wayland-popup.c b/src/wayland/meta-wayland-popup.c
+index 288b577..0a0f716 100644
+--- a/src/wayland/meta-wayland-popup.c
++++ b/src/wayland/meta-wayland-popup.c
+@@ -191,10 +191,16 @@ MetaWaylandPopupGrab *
+ meta_wayland_popup_grab_create (MetaWaylandSeat         *seat,
+                                 MetaWaylandPopupSurface *popup_surface)
+ {
++  MetaContext *context =
++    meta_wayland_compositor_get_context (seat->compositor);
++  MetaBackend *backend = meta_context_get_backend (context);
++  ClutterStage *stage = CLUTTER_STAGE (meta_backend_get_stage (backend));
+   MetaWaylandSurface *surface =
+     meta_wayland_popup_surface_get_surface (popup_surface);
+   MetaWaylandInput *input = meta_wayland_seat_get_input (seat);
+   MetaWaylandPopupGrab *grab;
++  ClutterActor *surface_actor;
++  ClutterActor *grab_actor;
+ 
+   grab = g_new0 (MetaWaylandPopupGrab, 1);
+   grab->seat = seat;
+@@ -206,6 +212,10 @@ meta_wayland_popup_grab_create (MetaWaylandSeat         *seat,
+                                              &popup_event_interface,
+                                              TRUE, grab);
+ 
++  surface_actor = CLUTTER_ACTOR (meta_wayland_surface_get_actor (surface));
++  grab_actor = clutter_stage_get_grab_actor (stage);
++  g_object_set (grab_actor, "actor-for-cursor", surface_actor, NULL);
++
+   return grab;
+ }
+ 

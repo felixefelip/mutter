@@ -332,6 +332,15 @@ meta_clutter_backend_native_get_cursor (ClutterBackend    *clutter_backend,
   return meta_backend_get_cursor (clutter_backend_native->backend, cursor_type);
 }
 
+static ClutterCursorType
+meta_clutter_backend_native_get_global_cursor_type (ClutterBackend *clutter_backend)
+{
+  MetaClutterBackendNative *clutter_backend_native =
+    META_CLUTTER_BACKEND_NATIVE (clutter_backend);
+
+  return meta_backend_get_global_cursor_type (clutter_backend_native->backend);
+}
+
 static void
 meta_clutter_backend_native_constructed (GObject *object)
 {
@@ -386,6 +395,7 @@ meta_clutter_backend_native_class_init (MetaClutterBackendNativeClass *klass)
   clutter_backend_class->foreach_sprite = meta_clutter_backend_native_foreach_sprite;
   clutter_backend_class->get_key_focus = meta_clutter_backend_native_get_key_focus;
   clutter_backend_class->get_cursor = meta_clutter_backend_native_get_cursor;
+  clutter_backend_class->get_global_cursor_type = meta_clutter_backend_native_get_global_cursor_type;
 }
 
 MetaClutterBackendNative *

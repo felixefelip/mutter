@@ -1,0 +1,50 @@
+From: =?utf-8?b?Ik1hcmNvIFRyZXZpc2FuIChUcmV2acOxbyki?= <mail@3v1n0.net>
+Date: Wed, 22 Apr 2026 00:27:46 +0200
+Subject: tests/dbusmock-templates/colord: Raise AlreadyExists when re-adding
+ a device
+
+This is what the actual colord does, with the same error message and
+type, so mimic the same behavior
+
+Part-of: <https://gitlab.gnome.org/GNOME/mutter/-/merge_requests/5038>
+
+Origin: https://gitlab.gnome.org/GNOME/mutter/-/commit/b78505e
+Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/stonking/+source/mutter/+bug/2148655
+---
+ src/tests/dbusmock-templates/colord.py | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/src/tests/dbusmock-templates/colord.py b/src/tests/dbusmock-templates/colord.py
+index a2de346..f25a7b3 100644
+--- a/src/tests/dbusmock-templates/colord.py
++++ b/src/tests/dbusmock-templates/colord.py
+@@ -57,12 +57,19 @@ def profile_id_from_path(mock, path):
+ class ColordAlreadyExistsException(dbus.DBusException):
+     _dbus_error_name = 'org.freedesktop.ColorManager.AlreadyExists'
+ 
++    def __init__(self, message=''):
++        super().__init__(message)
++
+ class ColordNotFoundException(dbus.DBusException):
+     _dbus_error_name = 'org.freedesktop.ColorManager.NotFound'
+ 
+ 
+ @dbus.service.method(MAIN_IFACE, in_signature='ssa{sv}', out_signature='o')
+ def CreateDevice(self, device_id, scope, props):
++    if device_id in self.devices:
++        raise ColordAlreadyExistsException(
++            f"device id '{device_id}' already exists")
++
+     uid = os.getuid()
+     username = get_username(uid)
+     device_path = PATH_PREFIX + '/devices/' + \
+@@ -109,7 +116,8 @@ def CreateProfileWithFd(self, profile_id, scope, handle, props):
+         '_' + escape_unit_name(username) + '_' + str(uid)
+ 
+     if profile_id in self.profiles:
+-        raise ColordAlreadyExistsException()
++        raise ColordAlreadyExistsException(
++            f"profile id '{profile_id}' already exists")
+ 
+     self.profiles[profile_id] = profile_path
+     self.AddObject(profile_path,

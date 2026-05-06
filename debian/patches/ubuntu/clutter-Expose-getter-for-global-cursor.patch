@@ -1,0 +1,120 @@
+From: Alessandro Astone <alessandro.astone@canonical.com>
+Date: Tue, 14 Apr 2026 10:59:30 +0200
+Subject: clutter: Expose getter for global cursor
+
+Forwarded: https://gitlab.gnome.org/GNOME/mutter/-/merge_requests/5023
+Bug: https://gitlab.gnome.org/GNOME/mutter/-/issues/4726
+Bug-Ubuntu: https://launchpad.net/bugs/2148049
+---
+ clutter/clutter/clutter-backend-private.h         |  5 +++++
+ clutter/clutter/clutter-backend.c                 |  9 +++++++++
+ src/backends/meta-backend-private.h               |  2 ++
+ src/backends/meta-backend.c                       | 13 ++++++++++---
+ src/backends/native/meta-clutter-backend-native.c | 10 ++++++++++
+ 5 files changed, 36 insertions(+), 3 deletions(-)
+
+diff --git a/clutter/clutter/clutter-backend-private.h b/clutter/clutter/clutter-backend-private.h
+index f0ec62e..c85d4d3 100644
+--- a/clutter/clutter/clutter-backend-private.h
++++ b/clutter/clutter/clutter-backend-private.h
+@@ -107,6 +107,8 @@ struct _ClutterBackendClass
+   ClutterCursor * (* get_cursor) (ClutterBackend    *backend,
+                                   ClutterCursorType  cursor_type);
+ 
++  ClutterCursorType (* get_global_cursor_type) (ClutterBackend *backend);
++
+   /* signals */
+   void (* resolution_changed) (ClutterBackend *backend);
+ };
+@@ -137,6 +139,9 @@ CLUTTER_EXPORT
+ ClutterCursor * clutter_backend_get_cursor (ClutterBackend    *backend,
+                                             ClutterCursorType  cursor_type);
+ 
++CLUTTER_EXPORT
++ClutterCursorType clutter_backend_get_global_cursor_type (ClutterBackend *backend);
++
+ CLUTTER_EXPORT
+ void clutter_backend_destroy (ClutterBackend *backend);
+ 
+diff --git a/clutter/clutter/clutter-backend.c b/clutter/clutter/clutter-backend.c
+index 23fef7f..b9f47b2 100644
+--- a/clutter/clutter/clutter-backend.c
++++ b/clutter/clutter/clutter-backend.c
+@@ -665,3 +665,12 @@ clutter_backend_get_cursor (ClutterBackend    *backend,
+ 
+   return CLUTTER_BACKEND_GET_CLASS (backend)->get_cursor (backend, cursor_type);
+ }
++
++ClutterCursorType
++clutter_backend_get_global_cursor_type (ClutterBackend *backend)
++{
++  if (!CLUTTER_BACKEND_GET_CLASS (backend)->get_global_cursor_type)
++    return CLUTTER_CURSOR_INHERIT;
++
++  return CLUTTER_BACKEND_GET_CLASS (backend)->get_global_cursor_type (backend);
++}
+diff --git a/src/backends/meta-backend-private.h b/src/backends/meta-backend-private.h
+index e95e985..2603225 100644
+--- a/src/backends/meta-backend-private.h
++++ b/src/backends/meta-backend-private.h
+@@ -246,3 +246,5 @@ uint32_t meta_evdev_tool_button_to_clutter (uint32_t evdev_button);
+ 
+ ClutterCursor * meta_backend_get_cursor (MetaBackend       *backend,
+                                          ClutterCursorType  cursor_type);
++
++ClutterCursorType meta_backend_get_global_cursor_type (MetaBackend *backend);
+diff --git a/src/backends/meta-backend.c b/src/backends/meta-backend.c
+index 4eeb6ad..9e9ece8 100644
+--- a/src/backends/meta-backend.c
++++ b/src/backends/meta-backend.c
+@@ -2168,12 +2168,19 @@ meta_backend_get_cursor (MetaBackend       *backend,
+                          ClutterCursorType  cursor_type)
+ {
+   MetaCursorTracker *cursor_tracker = meta_backend_get_cursor_tracker (backend);
+-  ClutterCursorType global_cursor = CLUTTER_CURSOR_INHERIT;
+-
+-  g_signal_emit (backend, signals[OVERRIDE_CURSOR], 0, &global_cursor);
++  ClutterCursorType global_cursor = meta_backend_get_global_cursor_type (backend);
+ 
+   if (global_cursor != CLUTTER_CURSOR_INHERIT)
+     cursor_type = global_cursor;
+ 
+   return CLUTTER_CURSOR (meta_cursor_xcursor_get (cursor_type, cursor_tracker));
+ }
++
++ClutterCursorType
++meta_backend_get_global_cursor_type (MetaBackend *backend)
++{
++  ClutterCursorType global_cursor = CLUTTER_CURSOR_INHERIT;
++
++  g_signal_emit (backend, signals[OVERRIDE_CURSOR], 0, &global_cursor);
++  return global_cursor;
++}
+diff --git a/src/backends/native/meta-clutter-backend-native.c b/src/backends/native/meta-clutter-backend-native.c
+index 468a435..01baf1c 100644
+--- a/src/backends/native/meta-clutter-backend-native.c
++++ b/src/backends/native/meta-clutter-backend-native.c
+@@ -332,6 +332,15 @@ meta_clutter_backend_native_get_cursor (ClutterBackend    *clutter_backend,
+   return meta_backend_get_cursor (clutter_backend_native->backend, cursor_type);
+ }
+ 
++static ClutterCursorType
++meta_clutter_backend_native_get_global_cursor_type (ClutterBackend *clutter_backend)
++{
++  MetaClutterBackendNative *clutter_backend_native =
++    META_CLUTTER_BACKEND_NATIVE (clutter_backend);
++
++  return meta_backend_get_global_cursor_type (clutter_backend_native->backend);
++}
++
+ static void
+ meta_clutter_backend_native_constructed (GObject *object)
+ {
+@@ -386,6 +395,7 @@ meta_clutter_backend_native_class_init (MetaClutterBackendNativeClass *klass)
+   clutter_backend_class->foreach_sprite = meta_clutter_backend_native_foreach_sprite;
+   clutter_backend_class->get_key_focus = meta_clutter_backend_native_get_key_focus;
+   clutter_backend_class->get_cursor = meta_clutter_backend_native_get_cursor;
++  clutter_backend_class->get_global_cursor_type = meta_clutter_backend_native_get_global_cursor_type;
+ }
+ 
+ MetaClutterBackendNative *

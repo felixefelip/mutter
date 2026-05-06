@@ -1,0 +1,45 @@
+From: Alessandro Astone <alessandro.astone@canonical.com>
+Date: Tue, 14 Apr 2026 11:00:29 +0200
+Subject: clutter/sprite: Use overridden global cursor in invalidate_cursor
+
+Forwarded: https://gitlab.gnome.org/GNOME/mutter/-/merge_requests/5023
+Bug: https://gitlab.gnome.org/GNOME/mutter/-/issues/4726
+Bug-Ubuntu: https://launchpad.net/bugs/2148049
+---
+ clutter/clutter/clutter-sprite.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/clutter/clutter/clutter-sprite.c b/clutter/clutter/clutter-sprite.c
+index e45d473..0d19790 100644
+--- a/clutter/clutter/clutter-sprite.c
++++ b/clutter/clutter/clutter-sprite.c
+@@ -27,6 +27,7 @@
+ 
+ #include "clutter/clutter-action-private.h"
+ #include "clutter/clutter-actor-private.h"
++#include "clutter/clutter-backend-private.h"
+ #include "clutter/clutter-debug.h"
+ #include "clutter/clutter-enum-types.h"
+ #include "clutter/clutter-event-private.h"
+@@ -1193,12 +1194,21 @@ clutter_sprite_invalidate_cursor (ClutterSprite *sprite)
+   ClutterContext *context = clutter_actor_get_context (CLUTTER_ACTOR (stage));
+   ClutterBackend *backend = clutter_context_get_backend (context);
+   ClutterSeat *seat = clutter_backend_get_default_seat (backend);
++  ClutterCursorType global_cursor;
+   g_autoptr (ClutterCursor) cursor = NULL;
+ 
+   if (clutter_sprite_get_role (sprite) == CLUTTER_SPRITE_ROLE_POINTER &&
+       !clutter_seat_is_unfocus_inhibited (seat))
+     goto out;
+ 
++  /* If there's a global cursor override, short circuit and use that */
++  global_cursor = clutter_backend_get_global_cursor_type (backend);
++  if (global_cursor != CLUTTER_CURSOR_INHERIT)
++    {
++      cursor = clutter_backend_get_cursor (backend, global_cursor);
++      goto out;
++    }
++
+   /* If there's an implicit grab, use this actor */
+   if (priv->implicit_grab_actor)
+     actor = priv->implicit_grab_actor;

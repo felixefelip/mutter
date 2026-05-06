@@ -665,3 +665,12 @@ clutter_backend_get_cursor (ClutterBackend    *backend,
 
   return CLUTTER_BACKEND_GET_CLASS (backend)->get_cursor (backend, cursor_type);
 }
+
+ClutterCursorType
+clutter_backend_get_global_cursor_type (ClutterBackend *backend)
+{
+  if (!CLUTTER_BACKEND_GET_CLASS (backend)->get_global_cursor_type)
+    return CLUTTER_CURSOR_INHERIT;
+
+  return CLUTTER_BACKEND_GET_CLASS (backend)->get_global_cursor_type (backend);
+}

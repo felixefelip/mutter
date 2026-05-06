@@ -1,0 +1,133 @@
+From: Alessandro Astone <alessandro.astone@canonical.com>
+Date: Mon, 13 Apr 2026 18:58:48 +0200
+Subject: wayland: Do not track overridden cursor
+
+Wayland objects should track the cursor requested from the focused client,
+and not the potentially overridden global cursor.
+
+This matters in the following sequence:
+* Create startup sequence
+* Set global CLUTTER_CURSOR_WAIT
+* Surface gets pointer focus and requests cursor shape
+-> We must now store the requested cursor without global overrides
+* New startup sequence completes
+* Restore the previously requested cursor
+
+This was already the case if using cursor surfaces, but not for cursor shapes.
+
+Forwarded: https://gitlab.gnome.org/GNOME/mutter/-/merge_requests/5023
+Bug: https://gitlab.gnome.org/GNOME/mutter/-/issues/4726
+Bug-Ubuntu: https://launchpad.net/bugs/2148049
+---
+ src/wayland/meta-wayland-pointer.c     | 23 +++++++++++++++--------
+ src/wayland/meta-wayland-tablet-tool.c | 23 +++++++++++++++--------
+ 2 files changed, 30 insertions(+), 16 deletions(-)
+
+diff --git a/src/wayland/meta-wayland-pointer.c b/src/wayland/meta-wayland-pointer.c
+index 6205430..da29051 100644
+--- a/src/wayland/meta-wayland-pointer.c
++++ b/src/wayland/meta-wayland-pointer.c
+@@ -1213,11 +1213,18 @@ meta_wayland_pointer_get_relative_coordinates (MetaWaylandPointer *pointer,
+   meta_wayland_surface_get_relative_coordinates (surface, pos.x, pos.y, x, y);
+ }
+ 
++static ClutterCursor *
++meta_wayland_pointer_get_xcursor (MetaWaylandPointer *pointer, ClutterCursorType shape)
++{
++  MetaBackend *backend = backend_from_pointer (pointer);
++  MetaCursorTracker *cursor_tracker = meta_backend_get_cursor_tracker (backend);
++
++  return CLUTTER_CURSOR (meta_cursor_xcursor_get (shape, cursor_tracker));
++}
++
+ static void
+ meta_wayland_pointer_update_cursor (MetaWaylandPointer *pointer)
+ {
+-  MetaBackend *backend = backend_from_pointer (pointer);
+-  ClutterBackend *clutter_backend = meta_backend_get_clutter_backend (backend);
+   MetaWaylandSurface *surface;
+   g_autoptr (ClutterCursor) cursor = NULL;
+ 
+@@ -1238,13 +1245,13 @@ meta_wayland_pointer_update_cursor (MetaWaylandPointer *pointer)
+             }
+           else
+             {
+-              cursor = clutter_backend_get_cursor (clutter_backend,
+-                                                   CLUTTER_CURSOR_NONE);
++              cursor = meta_wayland_pointer_get_xcursor (pointer,
++                                                         CLUTTER_CURSOR_NONE);
+             }
+           break;
+         case CURSOR_SOURCE_SHAPE:
+-          cursor = clutter_backend_get_cursor (clutter_backend,
+-                                               pointer->cursor_shape);
++          cursor = meta_wayland_pointer_get_xcursor (pointer,
++                                                     pointer->cursor_shape);
+           break;
+         case CURSOR_SOURCE_UNSET:
+           cursor = NULL;
+@@ -1253,8 +1260,8 @@ meta_wayland_pointer_update_cursor (MetaWaylandPointer *pointer)
+     }
+   else if (pointer->current)
+     {
+-      cursor = clutter_backend_get_cursor (clutter_backend,
+-                                           CLUTTER_CURSOR_DEFAULT);
++      cursor = meta_wayland_pointer_get_xcursor (pointer,
++                                                 CLUTTER_CURSOR_DEFAULT);
+     }
+ 
+   g_set_object (&pointer->cursor, cursor);
+diff --git a/src/wayland/meta-wayland-tablet-tool.c b/src/wayland/meta-wayland-tablet-tool.c
+index 4cc9e57..8d2831f 100644
+--- a/src/wayland/meta-wayland-tablet-tool.c
++++ b/src/wayland/meta-wayland-tablet-tool.c
+@@ -121,11 +121,18 @@ move_resources_for_client (struct wl_list   *destination,
+     }
+ }
+ 
++static ClutterCursor *
++meta_wayland_tablet_tool_get_xcursor (MetaWaylandTabletTool *tool, ClutterCursorType shape)
++{
++  MetaBackend *backend = backend_from_tool (tool);
++  MetaCursorTracker *cursor_tracker = meta_backend_get_cursor_tracker (backend);
++
++  return CLUTTER_CURSOR (meta_cursor_xcursor_get (shape, cursor_tracker));
++}
++
+ static void
+ meta_wayland_tablet_tool_update_cursor (MetaWaylandTabletTool *tool)
+ {
+-  MetaBackend *backend = backend_from_tool (tool);
+-  ClutterBackend *clutter_backend = meta_backend_get_clutter_backend (backend);
+   g_autoptr (ClutterCursor) cursor = NULL;
+ 
+   if (tool->focus_surface)
+@@ -143,13 +150,13 @@ meta_wayland_tablet_tool_update_cursor (MetaWaylandTabletTool *tool)
+             }
+           else
+             {
+-              cursor = clutter_backend_get_cursor (clutter_backend,
+-                                                   CLUTTER_CURSOR_NONE);
++              cursor = meta_wayland_tablet_tool_get_xcursor (tool,
++                                                             CLUTTER_CURSOR_NONE);
+             }
+           break;
+         case CURSOR_SOURCE_SHAPE:
+-          cursor = clutter_backend_get_cursor (clutter_backend,
+-                                               tool->cursor_shape);
++          cursor = meta_wayland_tablet_tool_get_xcursor (tool,
++                                                         tool->cursor_shape);
+           break;
+         case CURSOR_SOURCE_UNSET:
+           cursor = NULL;
+@@ -158,8 +165,8 @@ meta_wayland_tablet_tool_update_cursor (MetaWaylandTabletTool *tool)
+     }
+   else if (tool->current)
+     {
+-      cursor = clutter_backend_get_cursor (clutter_backend,
+-                                           CLUTTER_CURSOR_DEFAULT);
++      cursor = meta_wayland_tablet_tool_get_xcursor (tool,
++                                                     CLUTTER_CURSOR_DEFAULT);
+     }
+ 
+   if (g_set_object (&tool->cursor, cursor))

@@ -191,10 +191,16 @@ MetaWaylandPopupGrab *
 meta_wayland_popup_grab_create (MetaWaylandSeat         *seat,
                                 MetaWaylandPopupSurface *popup_surface)
 {
+  MetaContext *context =
+    meta_wayland_compositor_get_context (seat->compositor);
+  MetaBackend *backend = meta_context_get_backend (context);
+  ClutterStage *stage = CLUTTER_STAGE (meta_backend_get_stage (backend));
   MetaWaylandSurface *surface =
     meta_wayland_popup_surface_get_surface (popup_surface);
   MetaWaylandInput *input = meta_wayland_seat_get_input (seat);
   MetaWaylandPopupGrab *grab;
+  ClutterActor *surface_actor;
+  ClutterActor *grab_actor;
 
   grab = g_new0 (MetaWaylandPopupGrab, 1);
   grab->seat = seat;
@@ -205,6 +211,10 @@ meta_wayland_popup_grab_create (MetaWaylandSeat         *seat,
     meta_wayland_input_attach_event_handler (input,
                                              &popup_event_interface,
                                              TRUE, grab);
+
+  surface_actor = CLUTTER_ACTOR (meta_wayland_surface_get_actor (surface));
+  grab_actor = clutter_stage_get_grab_actor (stage);
+  g_object_set (grab_actor, "actor-for-cursor", surface_actor, NULL);
 
   return grab;
 }

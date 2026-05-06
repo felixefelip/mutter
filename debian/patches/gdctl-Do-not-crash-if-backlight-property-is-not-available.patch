@@ -1,0 +1,31 @@
+From: =?utf-8?b?Ik1hcmNvIFRyZXZpc2FuIChUcmV2acOxbyki?= <mail@3v1n0.net>
+Date: Tue, 21 Apr 2026 19:26:06 +0200
+Subject: gdctl: Do not crash if backlight property is not available
+
+This may happen when using the tool against an old instance of mutter
+running, or when no backlight information is provided, but still it
+seems to happen in GNOME 50.1 still, so better to prevent any crash
+
+Closes: https://gitlab.gnome.org/GNOME/mutter/-/issues/4762
+Part-of: <https://gitlab.gnome.org/GNOME/mutter/-/merge_requests/5037>
+
+Origin: https://gitlab.gnome.org/GNOME/mutter/-/commit/dd4b388
+Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/+source/mutter/+bug/2149823
+---
+ tools/gdctl | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/tools/gdctl b/tools/gdctl
+index 7f6070d..1b953e2 100755
+--- a/tools/gdctl
++++ b/tools/gdctl
+@@ -350,6 +350,9 @@ class DisplayConfig:
+ 
+     def get_backlight(self, monitor) -> tuple[int, Any]:
+         variant = self._proxy.get_cached_property("Backlight")
++        if not variant:
++            return (0, None)
++
+         [serial, backlights] = variant
+ 
+         try:

@@ -1088,28 +1088,33 @@ call_snapd_sync (SoupSession  *session,
                  const char   *path,
                  GError      **error)
 {
-  g_autoptr(GMainLoop) loop = g_main_loop_new (NULL, FALSE);
+  g_autoptr(GMainContext) context = g_main_context_new ();
+  g_autoptr(GMainLoop) loop = g_main_loop_new (context, FALSE);
   g_autoptr(GCancellable) cancellable = g_cancellable_new ();
   g_autoptr(GBytes) response_body = NULL;
   g_autoptr(SoupMessage) msg = NULL;
   SendMessageData send_message_data = { .loop = loop, .error = error };
-  guint timeout_id;
+  GSource *timeout_source;
 
   msg = make_snapd_message (method, path);
 
   /* We really do not want to block here and we should but if we do, let's
    * not hang fully.
    */
-  timeout_id =
-    g_timeout_add_once (25, (GSourceOnceFunc) g_cancellable_cancel, cancellable);
+  timeout_source = g_timeout_source_new (25);
+  g_source_set_callback (timeout_source, (GSourceFunc) g_cancellable_cancel, cancellable, NULL);
+  g_source_attach (timeout_source, context);
+  g_source_unref (timeout_source);
 
+  g_main_context_push_thread_default (context);
   soup_session_send_and_read_async (session, msg, G_PRIORITY_HIGH,
                                     cancellable, on_send_message_finished,
                                     &send_message_data);
   g_main_loop_run (loop);
+  g_main_context_pop_thread_default (context);
 
   if (!g_cancellable_is_cancelled (cancellable))
-    g_clear_handle_id (&timeout_id, g_source_remove);
+    g_source_destroy (timeout_source);
 
   if (!(response_body = g_steal_pointer (&send_message_data.response_body)))
     return NULL;
@@ -1183,6 +1188,9 @@ snapd_get_application_app_id_sync (MetaDisplay  *display,
         }
 
       app = json_node_get_object (app_node);
+      if (!json_object_has_member (app, "desktop-file"))
+        continue;
+
       name = json_object_get_string_member (app, "name");
       desktop_file = json_object_get_string_member (app, "desktop-file");
 

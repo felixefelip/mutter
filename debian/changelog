@@ -1,3 +1,30 @@
+mutter (50.1-0ubuntu2.1) resolute; urgency=medium
+
+  [ Alessandro Astone ]
+  * d/p/u: Avoid processing other events while waiting for snap id.
+    Window creation is a synchronous process, so we must make sure to not
+    process any other events while we're waiting for a response from snapd.
+    This is achieved by using a temporary GMainContext instead of the default.
+    (LP: #2147501)
+  * d/p/u: Fix cursor spinning after launching an app (LP: #2148049)
+  * d/p/u: Fix cursor not changing in popups (LP: #2148481)
+  * d/libmutter-18-0.symbols: Add new symbol from patch
+  * d/p/u: Acknowledge the existance of non-desktop snap apps.
+    A snap may provide some desktop apps and some CLI apps.
+    While iterating the apps provided by the snap in search of a desktop file
+    that matches, we should acknowledge the fact that some snap apps will have
+    no associated desktop file.
+    It is otherwise considered a programming error to try and access a json
+    member that does not exist. (LP: #2150242)
+  * debian: Branch for ubuntu/resolute
+
+  [ Marco Trevisan (Treviño) ]
+  * d/p: Cherry-pick Upstream Fix for crash on hot-plugging similar monitors
+    (LP: #2148655)
+  * d/p: Fix gdctl crash on invalid backlight (LP: #2149823)
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Wed, 06 May 2026 12:59:48 +0200
+
 mutter (50.1-0ubuntu2) resolute; urgency=medium
 
   * d/p/ubuntu/workspace: De-prioritize focusing desktop windows.

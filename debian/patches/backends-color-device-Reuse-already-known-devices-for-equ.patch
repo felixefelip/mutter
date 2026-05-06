@@ -1,0 +1,118 @@
+From: =?utf-8?b?Ik1hcmNvIFRyZXZpc2FuIChUcmV2acOxbyki?= <mail@3v1n0.net>
+Date: Wed, 22 Apr 2026 00:30:59 +0200
+Subject: backends/color-device: Reuse already known devices for equal
+ monitors
+
+If multiple monitors share the same device-id we can assume that they
+are the very same monitor, so rather than ignoring the colord config
+for the monitor configured later, reuse the same colord configuration
+for all of them
+
+Part-of: <https://gitlab.gnome.org/GNOME/mutter/-/merge_requests/5038>
+
+Origin: https://gitlab.gnome.org/GNOME/mutter/-/commit/0b66278
+Bug-Ubuntu: https://bugs.launchpad.net/ubuntu/stonking/+source/mutter/+bug/2148655
+---
+ src/backends/meta-color-device.c | 42 ++++++++++++++++++++++++++++++++++++++++
+ src/tests/monitor-config-tests.c |  9 ---------
+ 2 files changed, 42 insertions(+), 9 deletions(-)
+
+diff --git a/src/backends/meta-color-device.c b/src/backends/meta-color-device.c
+index 53fa467..a20e078 100644
+--- a/src/backends/meta-color-device.c
++++ b/src/backends/meta-color-device.c
+@@ -498,6 +498,34 @@ ensure_device_profile_cb (GObject      *source_object,
+     }
+ }
+ 
++static void
++on_cd_device_found (GObject      *object,
++                    GAsyncResult *res,
++                    gpointer      user_data)
++{
++  g_autoptr (GError) error = NULL;
++  MetaColorDevice *color_device = user_data;
++  CdDevice *cd_device;
++
++  cd_device = cd_client_find_device_finish (CD_CLIENT (object), res, &error);
++  if (!cd_device)
++    {
++      if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
++        return;
++
++      g_warning ("Failed to find existing colord device for '%s': %s",
++                 color_device->cd_device_id,
++                 error->message);
++      meta_color_device_notify_ready (color_device, FALSE);
++      return;
++    }
++
++  meta_topic (META_DEBUG_COLOR,
++              "Reusing existing colord device '%s'",
++              color_device->cd_device_id);
++  setup_created_cd_device (color_device, cd_device);
++}
++
+ static void
+ on_cd_device_created (GObject      *object,
+                       GAsyncResult *res,
+@@ -514,6 +542,20 @@ on_cd_device_created (GObject      *object,
+       if (g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+         return;
+ 
++      if (g_error_matches (error, CD_CLIENT_ERROR, CD_CLIENT_ERROR_ALREADY_EXISTS))
++        {
++          meta_topic (META_DEBUG_COLOR,
++                      "Colord device '%s' already exists, looking it up",
++                      color_device->cd_device_id);
++
++          cd_client_find_device (cd_client,
++                                 color_device->cd_device_id,
++                                 color_device->cancellable,
++                                 on_cd_device_found,
++                                 color_device);
++          return;
++        }
++
+       g_warning ("Failed to create colord device for '%s': %s",
+                  color_device->cd_device_id,
+                  error->message);
+diff --git a/src/tests/monitor-config-tests.c b/src/tests/monitor-config-tests.c
+index 2fef6bd..eae1881 100644
+--- a/src/tests/monitor-config-tests.c
++++ b/src/tests/monitor-config-tests.c
+@@ -3901,10 +3901,6 @@ meta_test_monitor_duplicate_serial_hotplug (void)
+   };
+   MetaBackend *backend = meta_context_get_backend (test_context);
+   MetaMonitorTestSetup *test_setup;
+-  const char *expected_message =
+-    "*Failed to create colord device for "
+-    "'xrandr-MetaProduct's Inc.-MetaMonitor-SAME-SERIAL': device id "
+-    "'xrandr-MetaProduct's Inc.-MetaMonitor-SAME-SERIAL' already exists";
+ 
+   g_test_bug ("https://gitlab.gnome.org/GNOME/mutter/-/issues/4736");
+ 
+@@ -3913,14 +3909,11 @@ meta_test_monitor_duplicate_serial_hotplug (void)
+                                                &test_case.setup,
+                                                MONITOR_TEST_FLAG_NO_STORED);
+ 
+-  g_test_expect_message ("libmutter", G_LOG_LEVEL_WARNING,
+-                         expected_message);
+   meta_emulate_hotplug (test_setup);
+   META_TEST_LOG_CALL ("Checking monitor configuration",
+                       meta_check_monitor_configuration (test_context,
+                                                         &test_case.expect));
+   meta_check_monitor_test_clients_state ();
+-  g_test_assert_expected_messages ();
+ 
+   /*
+    * Second hotplug with the same monitors: meta_logical_monitor_update() is
+@@ -4002,8 +3995,6 @@ meta_test_monitor_duplicate_serial_hotplug (void)
+                                                &test_case.setup,
+                                                MONITOR_TEST_FLAG_NO_STORED);
+ 
+-  g_test_expect_message ("libmutter", G_LOG_LEVEL_WARNING,
+-                         expected_message);
+   meta_emulate_hotplug (test_setup);
+   META_TEST_LOG_CALL ("Checking three-monitor configuration",
+                       meta_check_monitor_configuration (test_context,

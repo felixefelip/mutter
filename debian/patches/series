@@ -11,3 +11,13 @@ ubuntu/wayland-Notify-modifiers-after-pointer-button-events.patch
 ubuntu/window-Use-snapd-socket-to-get-the-application-ID.patch
 ubuntu/clutter-frame-clock-Don-t-skip-the-next-frame.patch
 ubuntu/workspace-De-prioritize-focusing-desktop-windows.patch
+ubuntu/clutter-Expose-getter-for-global-cursor.patch
+ubuntu/clutter-sprite-Use-overridden-global-cursor-in-invalidate.patch
+ubuntu/wayland-Do-not-track-overridden-cursor.patch
+ubuntu/wayland-popup-Track-wayland-cursor-through-input-only-act.patch
+tests-dbusmock-templates-colord-Raise-AlreadyExists-when-.patch
+backends-monitor-manager-Update-the-logical-monitor-takin.patch
+backends-color-device-Split-out-the-color-device-setup.patch
+backends-color-device-Reuse-already-known-devices-for-equ.patch
+tests-dbusrunner-Use-sh-to-launch-umockdev-wrapper.patch
+gdctl-Do-not-crash-if-backlight-property-is-not-available.patch
