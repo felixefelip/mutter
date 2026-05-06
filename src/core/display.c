@@ -34,6 +34,12 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifdef HAVE_SNAPD_SUPPORT
+#include <libsoup/soup.h>
+
+#define SNAPD_SOCKET_PATH "/var/run/snapd.socket"
+#endif
+
 #include "backends/meta-backend-private.h"
 #include "backends/meta-cursor-xcursor.h"
 #include "backends/meta-cursor-tracker-private.h"
@@ -901,6 +907,15 @@ meta_display_new (MetaContext  *context,
 
   display->sound_player = g_object_new (META_TYPE_SOUND_PLAYER, NULL);
 
+#ifdef HAVE_SNAPD_SUPPORT
+  g_autoptr(GSocketAddress) address = NULL;
+
+  address = g_unix_socket_address_new (SNAPD_SOCKET_PATH);
+  display->snapd_session = soup_session_new_with_options (
+    "remote-connectable", address, NULL);
+  soup_session_set_timeout (display->snapd_session, 1);
+#endif
+
   /* Done opening new display */
   display->display_opening = FALSE;
 
@@ -1075,6 +1090,7 @@ meta_display_close (MetaDisplay *display,
   g_clear_object (&display->startup_notification);
   g_clear_object (&display->workspace_manager);
   g_clear_object (&display->sound_player);
+  g_clear_object (&display->snapd_session);
 
   meta_clipboard_manager_shutdown (display);
   g_clear_object (&display->selection);
