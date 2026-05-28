@@ -286,6 +286,13 @@ struct _MetaWindow
     MetaEdgeConstraint left;
   } edge_constraints;
 
+  struct {
+    MetaEdgeConstraint top;
+    MetaEdgeConstraint right;
+    MetaEdgeConstraint bottom;
+    MetaEdgeConstraint left;
+  } overridden_constraints;
+
   MetaLogicalMonitorId *preferred_logical_monitor;
 
   /* Area to cover when in fullscreen mode.  If _NET_WM_FULLSCREEN_MONITORS has
