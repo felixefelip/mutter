@@ -612,12 +612,6 @@ index_binding (MetaKeyBindingManager *keys,
            * over non-first ones. */
           if (i > 0)
             continue;
-
-          g_warning ("Overwriting existing binding of keysym %x"
-                     " with keysym %x (keycode %x).",
-                     binding->combo.keysym,
-                     existing->combo.keysym,
-                     binding->resolved_combo.keycodes[i]);
         }
 
       g_hash_table_replace (keys->key_bindings_index,
