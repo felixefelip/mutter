@@ -1,0 +1,46 @@
+From: Alessandro Astone <alessandro.astone@canonical.com>
+Date: Wed, 20 May 2026 13:13:09 +0200
+Subject: wayland/seat: Track current touch surface
+
+The focused surface may differ or be unset, such as after a touch cancel.
+Track the current surface in the explicit getter, and keep tracking the focused
+surface in the focus handler only.
+
+Forwarded: https://gitlab.gnome.org/GNOME/mutter/-/merge_requests/5057
+Bug: https://gitlab.gnome.org/GNOME/mutter/-/work_items/4791
+Bug-Ubuntu: https://launchpad.net/bugs/2151278
+---
+ src/wayland/meta-wayland-seat.c | 13 +++++++++++--
+ 1 file changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/src/wayland/meta-wayland-seat.c b/src/wayland/meta-wayland-seat.c
+index 2d0a863..8642ce7 100644
+--- a/src/wayland/meta-wayland-seat.c
++++ b/src/wayland/meta-wayland-seat.c
+@@ -199,7 +199,16 @@ default_get_focus_surface (MetaWaylandEventHandler *handler,
+       role = clutter_sprite_get_role (CLUTTER_SPRITE (focus));
+ 
+       if (role == CLUTTER_SPRITE_ROLE_POINTER)
+-        surface = meta_wayland_pointer_get_implicit_grab_surface (seat->pointer);
++        {
++          surface = meta_wayland_pointer_get_implicit_grab_surface (seat->pointer);
++        }
++      else if (role == CLUTTER_SPRITE_ROLE_TOUCHPOINT)
++        {
++          ClutterEventSequence *sequence;
++
++          sequence = clutter_sprite_get_sequence (CLUTTER_SPRITE (focus));
++          surface = meta_wayland_touch_get_focus_surface (seat->touch, sequence);
++        }
+     }
+ 
+   if (!surface)
+@@ -695,7 +704,7 @@ meta_wayland_seat_get_current_surface (MetaWaylandSeat *seat,
+ 
+         sequence = clutter_sprite_get_sequence (CLUTTER_SPRITE (focus));
+ 
+-        return meta_wayland_touch_get_focus_surface (seat->touch, sequence);
++        return meta_wayland_touch_get_current_surface (seat->touch, sequence);
+       }
+     case CLUTTER_SPRITE_ROLE_TABLET:
+       {

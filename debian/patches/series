@@ -21,3 +21,6 @@ backends-color-device-Split-out-the-color-device-setup.patch
 backends-color-device-Reuse-already-known-devices-for-equ.patch
 tests-dbusrunner-Use-sh-to-launch-umockdev-wrapper.patch
 gdctl-Do-not-crash-if-backlight-property-is-not-available.patch
+wayland-touch-Rename-fields-and-functions-for-clarity.patch
+wayland-touch-Expose-the-current-touch-surface.patch
+wayland-seat-Track-current-touch-surface.patch

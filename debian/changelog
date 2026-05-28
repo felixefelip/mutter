@@ -1,3 +1,9 @@
+mutter (50.1-0ubuntu2.2) resolute; urgency=medium
+
+  * d/p: Fix same-window drag-and-drop on touchscreen (LP: #2151278)
+
+ -- Alessandro Astone <alessandro.astone@canonical.com>  Thu, 28 May 2026 15:00:08 +0200
+
 mutter (50.1-0ubuntu2.1) resolute; urgency=medium
 
   [ Alessandro Astone ]
