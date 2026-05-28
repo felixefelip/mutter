@@ -1003,6 +1003,7 @@ meta_seat_impl_notify_button_in_impl (MetaSeatImpl       *seat_impl,
       CLUTTER_BUTTON4_MASK, CLUTTER_BUTTON5_MASK, 0, 0, 0
     };
   int button_count;
+  gboolean xkb_changed;
 
   /* Drop any repeated button press (for example from virtual devices. */
   button_count = update_button_count (seat_impl, evdev_button, state);
@@ -1099,7 +1100,27 @@ meta_seat_impl_notify_button_in_impl (MetaSeatImpl       *seat_impl,
                               evdev_button,
                               NULL);
 
+  xkb_changed =
+    meta_keyboard_a11y_process_mouse_event_in_impl (seat_impl->keyboard_a11y,
+                                                    event);
+
+  if (xkb_changed)
+    meta_keymap_native_update_in_impl (seat_impl->keymap,
+                                       seat_impl->xkb);
+
   queue_event (seat_impl, event);
+
+  if (xkb_changed)
+    {
+      ClutterEvent *state_event;
+
+      state_event = meta_key_state_event_new (input_device,
+                                              CLUTTER_EVENT_NONE,
+                                              seat_impl->xkb,
+                                              seat_impl->button_state,
+                                              time_us);
+      queue_event (seat_impl, state_event);
+    }
 }
 
 static MetaSeatImpl *

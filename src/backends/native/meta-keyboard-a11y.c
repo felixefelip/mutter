@@ -543,6 +543,18 @@ handle_stickykeys_release (ClutterEvent     *event,
 }
 
 static gboolean
+handle_stickykeys_mouse_release (ClutterEvent     *event,
+                                 MetaKeyboardA11y *keyboard_a11y)
+{
+  if (!keyboard_a11y->stickykeys_latched_mask)
+    return FALSE;
+
+  update_internal_xkb_state (keyboard_a11y, 0, keyboard_a11y->stickykeys_locked_mask);
+  keyboard_a11y->stickykeys_latched_mask = 0;
+  return TRUE;
+}
+
+static gboolean
 trigger_toggle_slowkeys (gpointer user_data)
 {
   MetaKeyboardA11y *keyboard_a11y = user_data;
@@ -1234,6 +1246,22 @@ meta_keyboard_a11y_process_event_in_impl (MetaKeyboardA11y  *keyboard_a11y,
           *out_event = handle_stickykeys_release (event, keyboard_a11y);
           return *out_event != NULL;
         }
+    }
+
+  return FALSE;
+}
+
+gboolean meta_keyboard_a11y_process_mouse_event_in_impl (MetaKeyboardA11y  *keyboard_a11y,
+                                                         ClutterEvent      *event)
+{
+  ClutterEventType event_type;
+
+  event_type = clutter_event_type (event);
+
+  if (keyboard_a11y->a11y_flags & META_A11Y_STICKY_KEYS_ENABLED)
+    {
+      if (event_type == CLUTTER_BUTTON_RELEASE)
+        return handle_stickykeys_mouse_release (event, keyboard_a11y);
     }
 
   return FALSE;
