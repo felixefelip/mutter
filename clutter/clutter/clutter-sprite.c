@@ -27,6 +27,7 @@
 
 #include "clutter/clutter-action-private.h"
 #include "clutter/clutter-actor-private.h"
+#include "clutter/clutter-backend-private.h"
 #include "clutter/clutter-debug.h"
 #include "clutter/clutter-enum-types.h"
 #include "clutter/clutter-event-private.h"
@@ -1193,11 +1194,20 @@ clutter_sprite_invalidate_cursor (ClutterSprite *sprite)
   ClutterContext *context = clutter_actor_get_context (CLUTTER_ACTOR (stage));
   ClutterBackend *backend = clutter_context_get_backend (context);
   ClutterSeat *seat = clutter_backend_get_default_seat (backend);
+  ClutterCursorType global_cursor;
   g_autoptr (ClutterCursor) cursor = NULL;
 
   if (clutter_sprite_get_role (sprite) == CLUTTER_SPRITE_ROLE_POINTER &&
       !clutter_seat_is_unfocus_inhibited (seat))
     goto out;
+
+  /* If there's a global cursor override, short circuit and use that */
+  global_cursor = clutter_backend_get_global_cursor_type (backend);
+  if (global_cursor != CLUTTER_CURSOR_INHERIT)
+    {
+      cursor = clutter_backend_get_cursor (backend, global_cursor);
+      goto out;
+    }
 
   /* If there's an implicit grab, use this actor */
   if (priv->implicit_grab_actor)
