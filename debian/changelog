@@ -1,3 +1,17 @@
+mutter (50.1-0ubuntu2.3) resolute; urgency=medium
+
+  [ Thomas Chen ]
+  * Add ubuntu/output-kms-Filter-fallback-modes-by-panel-supported-refre.patch:
+    Fix listing unsupported refresh rate for panels on Intel Platform.
+    (LP: #2163136)
+
+  [ Cyrus Lien ]
+  * Add ubuntu/backends-monitor-manager-Fix-auto-rotate-on-phones-without.patch
+    and ubuntu/tests-monitor-orientation-Add-auto-rotate-test-for-phones.patch
+    to fix auto-rotation failure. (LP: #2161055)
+
+ -- Daniel van Vugt <daniel.van.vugt@canonical.com>  Wed, 19 Aug 2026 13:36:13 +0800
+
 mutter (50.1-0ubuntu2.2) resolute; urgency=medium
 
   * d/p: Fix same-window drag-and-drop on touchscreen (LP: #2151278)
