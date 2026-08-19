@@ -1461,6 +1461,7 @@ meta_workspace_get_default_focus_candidates (MetaWorkspace *workspace)
 {
   GList *l;
   GList *candidates = NULL;
+  MetaWindow *desktop_window = NULL;
 
   for (l = workspace->mru_list; l; l = l->next)
     {
@@ -1471,8 +1472,19 @@ meta_workspace_get_default_focus_candidates (MetaWorkspace *workspace)
       if (!is_focusable (window, workspace))
         continue;
 
+      if (window->type == META_WINDOW_DESKTOP)
+        {
+          if (!desktop_window)
+            desktop_window = window;
+
+          continue;
+        }
+
       candidates = g_list_prepend (candidates, window);
     }
+
+  if (!candidates && desktop_window)
+    candidates = g_list_prepend (candidates, desktop_window);
 
   return candidates;
 }
@@ -1498,6 +1510,7 @@ meta_workspace_get_default_focus_window_at_point (MetaWorkspace *workspace,
   g_autoptr (GList) sorted = NULL;
   GList *l;
   MetaStack *stack;
+  MetaWindow *desktop_window = NULL;
 
   g_return_val_if_fail (META_IS_WORKSPACE (workspace), NULL);
   g_return_val_if_fail (!not_this_one || META_IS_WINDOW (not_this_one), NULL);
@@ -1524,11 +1537,21 @@ meta_workspace_get_default_focus_window_at_point (MetaWorkspace *workspace,
       if (!is_focusable (window, workspace))
         continue;
 
+      if (window->type == META_WINDOW_DESKTOP)
+        {
+          if (!desktop_window)
+            desktop_window = window;
+          continue;
+        }
+
       if (!window_contains_point (window, root_x, root_y))
         continue;
 
       return window;
     }
+
+  if (desktop_window && window_contains_point (desktop_window, root_x, root_y))
+    return desktop_window;
 
   return NULL;
 }
@@ -1538,6 +1561,7 @@ meta_workspace_get_default_focus_window (MetaWorkspace *workspace,
                                          MetaWindow    *not_this_one)
 {
   GList *l;
+  MetaWindow *desktop_window = NULL;
 
   g_return_val_if_fail (META_IS_WORKSPACE (workspace), NULL);
   g_return_val_if_fail (!not_this_one || META_IS_WINDOW (not_this_one), NULL);
@@ -1554,10 +1578,17 @@ meta_workspace_get_default_focus_window (MetaWorkspace *workspace,
       if (!is_focusable (window, workspace))
         continue;
 
+      if (window->type == META_WINDOW_DESKTOP)
+        {
+          if (!desktop_window)
+            desktop_window = window;
+          continue;
+        }
+
       return window;
     }
 
-  return NULL;
+  return desktop_window;
 }
 
 static MetaWindow *
