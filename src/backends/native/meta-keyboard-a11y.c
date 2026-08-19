@@ -472,7 +472,11 @@ handle_stickykeys_press (ClutterEvent     *event,
   struct xkb_state *xkb_state;
 
   if (!key_event_is_modifier (event))
-    return NULL;
+    {
+      update_internal_xkb_state (keyboard_a11y, 0, keyboard_a11y->stickykeys_locked_mask);
+      keyboard_a11y->stickykeys_latched_mask = 0;
+      return NULL;
+    }
 
   if (keyboard_a11y->stickykeys_depressed_mask &&
       (keyboard_a11y->a11y_flags & META_A11Y_STICKY_KEYS_TWO_KEY_OFF))
@@ -508,39 +512,31 @@ handle_stickykeys_release (ClutterEvent     *event,
    */
   keyboard_a11y->stickykeys_depressed_mask = 0;
 
-  if (key_event_is_modifier (event))
+  if (!key_event_is_modifier (event))
+    return NULL;
+
+  if (!depressed_mods)
+    return NULL;
+
+  new_latched_mask = keyboard_a11y->stickykeys_latched_mask;
+  new_locked_mask = keyboard_a11y->stickykeys_locked_mask;
+
+  if (new_locked_mask & depressed_mods)
     {
-      if (!depressed_mods)
-        return NULL;
-
-      new_latched_mask = keyboard_a11y->stickykeys_latched_mask;
-      new_locked_mask = keyboard_a11y->stickykeys_locked_mask;
-
-      if (new_locked_mask & depressed_mods)
-        {
-          new_locked_mask &= ~depressed_mods;
-        }
-      else if (new_latched_mask & depressed_mods)
-        {
-          new_locked_mask |= depressed_mods;
-          new_latched_mask &= ~depressed_mods;
-        }
-      else
-        {
-          new_latched_mask |= depressed_mods;
-        }
-
-      if (keyboard_a11y->a11y_flags & META_A11Y_STICKY_KEYS_BEEP)
-        meta_keyboard_a11y_bell_notify (keyboard_a11y);
+      new_locked_mask &= ~depressed_mods;
+    }
+  else if (new_latched_mask & depressed_mods)
+    {
+      new_locked_mask |= depressed_mods;
+      new_latched_mask &= ~depressed_mods;
     }
   else
     {
-      if (!keyboard_a11y->stickykeys_latched_mask)
-        return NULL;
-
-      new_latched_mask = 0;
-      new_locked_mask = keyboard_a11y->stickykeys_locked_mask;
+      new_latched_mask |= depressed_mods;
     }
+
+  if (keyboard_a11y->a11y_flags & META_A11Y_STICKY_KEYS_BEEP)
+    meta_keyboard_a11y_bell_notify (keyboard_a11y);
 
   return rewrite_stickykeys_event (event, keyboard_a11y,
                                    new_latched_mask, new_locked_mask);
