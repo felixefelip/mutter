@@ -72,6 +72,7 @@
 #include "core/boxes-private.h"
 #include "core/constraints.h"
 #include "core/keybindings-private.h"
+#include "core/meta-private-introspected.h"
 #include "core/meta-window-config-private.h"
 #include "core/meta-workspace-manager-private.h"
 #include "core/place.h"
@@ -3179,6 +3180,38 @@ meta_window_update_tile_fraction (MetaWindow *window,
     }
 }
 
+G_ALWAYS_INLINE static inline MetaEdgeConstraint
+get_edge_constraint (MetaWindowConstraint constraint)
+{
+  switch (constraint)
+    {
+      case META_WINDOW_CONSTRAINT_NONE:
+        return META_EDGE_CONSTRAINT_NONE;
+      case META_WINDOW_CONSTRAINT_WINDOW:
+        return META_EDGE_CONSTRAINT_WINDOW;
+      case META_WINDOW_CONSTRAINT_MONITOR:
+        return META_EDGE_CONSTRAINT_MONITOR;
+    }
+
+  g_return_val_if_reached (META_WINDOW_CONSTRAINT_NONE);
+}
+
+void
+meta_window_override_constraints (MetaWindow           *window,
+                                  MetaWindowConstraint  top,
+                                  MetaWindowConstraint  left,
+                                  MetaWindowConstraint  right,
+                                  MetaWindowConstraint  bottom)
+{
+  window->overridden_constraints.left = get_edge_constraint (left);
+  window->overridden_constraints.right = get_edge_constraint (right);
+  window->overridden_constraints.top = get_edge_constraint (top);
+  window->overridden_constraints.bottom = get_edge_constraint (bottom);
+
+  update_edge_constraints (window);
+  meta_window_frame_size_changed (window);
+}
+
 static void
 update_edge_constraints (MetaWindow *window)
 {
@@ -3234,6 +3267,18 @@ update_edge_constraints (MetaWindow *window)
       window->edge_constraints.right = META_EDGE_CONSTRAINT_MONITOR;
       window->edge_constraints.left = META_EDGE_CONSTRAINT_MONITOR;
     }
+
+  if (window->overridden_constraints.top != META_EDGE_CONSTRAINT_NONE)
+      window->edge_constraints.top = window->overridden_constraints.top;
+
+  if (window->overridden_constraints.bottom != META_EDGE_CONSTRAINT_NONE)
+      window->edge_constraints.bottom = window->overridden_constraints.bottom;
+
+  if (window->overridden_constraints.left != META_EDGE_CONSTRAINT_NONE)
+      window->edge_constraints.left = window->overridden_constraints.left;
+
+  if (window->overridden_constraints.right != META_EDGE_CONSTRAINT_NONE)
+      window->edge_constraints.right = window->overridden_constraints.right;
 }
 
 gboolean
