@@ -24,3 +24,6 @@ gdctl-Do-not-crash-if-backlight-property-is-not-available.patch
 wayland-touch-Rename-fields-and-functions-for-clarity.patch
 wayland-touch-Expose-the-current-touch-surface.patch
 wayland-seat-Track-current-touch-surface.patch
+ubuntu/output-kms-Filter-fallback-modes-by-panel-supported-refre.patch
+ubuntu/backends-monitor-manager-Fix-auto-rotate-on-phones-without.patch
+ubuntu/tests-monitor-orientation-Add-auto-rotate-test-for-phones.patch
