@@ -279,6 +279,15 @@ if have_native_backend
   endif
 endif
 
+is_ubuntu = run_command(
+  'grep', '-F', 'NAME="Ubuntu"', '/etc/os-release', check: false).returncode() == 0
+snapd_support_dep = declare_dependency(
+  dependencies: [
+    dependency('json-glib-1.0', required: is_ubuntu),
+    dependency('libsoup-3.0', required: is_ubuntu),
+  ],
+)
+
 have_drm_plane_size_hint = cc.has_type('struct drm_plane_size_hint',
                                         dependencies: libdrm_dep,
                                         prefix: '#include <drm_mode.h>')
@@ -580,6 +589,7 @@ cdata.set('HAVE_XKBCOMMON_KANA_COMPOSE_LEDS',
   xkbcommon_dep.version().version_compare('>= 1.8.0'))
 cdata.set('HAVE_EIS_EVENT_REF',
   libeis_dep.version().version_compare('>= 1.5.0'))
+cdata.set('HAVE_SNAPD_SUPPORT', snapd_support_dep.found())
 
 if have_xwayland
   xkb_base = xkeyboard_config_dep.get_variable('xkb_base')
@@ -761,6 +771,7 @@ summary('Startup notification', have_startup_notification, section: 'Options')
 summary('Introspection', have_introspection, section: 'Options')
 summary('Documentation', have_documentation, section: 'Options')
 summary('Profiler', have_profiler, section: 'Options')
+summary('Snapd support', snapd_support_dep.found(), section: 'Options')
 summary('Xwayland initfd', have_xwayland_initfd, section: 'Options')
 summary('Xwayland listenfd', have_xwayland_listenfd, section: 'Options')
 summary('Xwayland terminate delay', have_xwayland_terminate_delay, section: 'Options')

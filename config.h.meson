@@ -64,6 +64,9 @@
 /* Defined if gnome-desktop is enabled */
 #mesondefine HAVE_GNOME_DESKTOP
 
+/* Whether have snapd support */
+#mesondefine HAVE_SNAPD_SUPPORT
+
 /* Defined if sound player is enabled */
 #mesondefine HAVE_SOUND_PLAYER
 
