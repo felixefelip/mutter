@@ -103,3 +103,5 @@ MetaWaylandSurface * meta_wayland_seat_get_current_surface (MetaWaylandSeat *sea
 
 ClutterCursor * meta_wayland_seat_get_cursor (MetaWaylandSeat *seat,
                                               ClutterSprite   *sprite);
+
+void meta_wayland_seat_maybe_update_modifiers (MetaWaylandSeat *seat);
