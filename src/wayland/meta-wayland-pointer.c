@@ -1213,11 +1213,18 @@ meta_wayland_pointer_get_relative_coordinates (MetaWaylandPointer *pointer,
   meta_wayland_surface_get_relative_coordinates (surface, pos.x, pos.y, x, y);
 }
 
+static ClutterCursor *
+meta_wayland_pointer_get_xcursor (MetaWaylandPointer *pointer, ClutterCursorType shape)
+{
+  MetaBackend *backend = backend_from_pointer (pointer);
+  MetaCursorTracker *cursor_tracker = meta_backend_get_cursor_tracker (backend);
+
+  return CLUTTER_CURSOR (meta_cursor_xcursor_get (shape, cursor_tracker));
+}
+
 static void
 meta_wayland_pointer_update_cursor (MetaWaylandPointer *pointer)
 {
-  MetaBackend *backend = backend_from_pointer (pointer);
-  ClutterBackend *clutter_backend = meta_backend_get_clutter_backend (backend);
   MetaWaylandSurface *surface;
   g_autoptr (ClutterCursor) cursor = NULL;
 
@@ -1238,13 +1245,13 @@ meta_wayland_pointer_update_cursor (MetaWaylandPointer *pointer)
             }
           else
             {
-              cursor = clutter_backend_get_cursor (clutter_backend,
-                                                   CLUTTER_CURSOR_NONE);
+              cursor = meta_wayland_pointer_get_xcursor (pointer,
+                                                         CLUTTER_CURSOR_NONE);
             }
           break;
         case CURSOR_SOURCE_SHAPE:
-          cursor = clutter_backend_get_cursor (clutter_backend,
-                                               pointer->cursor_shape);
+          cursor = meta_wayland_pointer_get_xcursor (pointer,
+                                                     pointer->cursor_shape);
           break;
         case CURSOR_SOURCE_UNSET:
           cursor = NULL;
@@ -1253,8 +1260,8 @@ meta_wayland_pointer_update_cursor (MetaWaylandPointer *pointer)
     }
   else if (pointer->current)
     {
-      cursor = clutter_backend_get_cursor (clutter_backend,
-                                           CLUTTER_CURSOR_DEFAULT);
+      cursor = meta_wayland_pointer_get_xcursor (pointer,
+                                                 CLUTTER_CURSOR_DEFAULT);
     }
 
   g_set_object (&pointer->cursor, cursor);
