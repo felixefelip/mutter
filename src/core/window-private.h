@@ -268,6 +268,8 @@ struct _MetaWindow
   char *gtk_window_object_path;
   char *gtk_app_menu_object_path;
   char *gtk_menubar_object_path;
+  char *dbus_appmenu_service_name;
+  char *dbus_appmenu_object_path;
   char *a11y_dbus_name;
   char *a11y_object_path;
 
@@ -776,6 +778,9 @@ void meta_window_set_gtk_dbus_properties  (MetaWindow *window,
                                            const char *menubar_path,
                                            const char *application_object_path,
                                            const char *window_object_path);
+void meta_window_set_dbus_appmenu         (MetaWindow *window,
+                                           const char *service_name,
+                                           const char *object_path);
 
 gboolean meta_window_has_transient_type   (MetaWindow *window);
 gboolean meta_window_has_modals           (MetaWindow *window);

@@ -204,6 +204,12 @@ META_EXPORT
 const char * meta_window_get_gtk_menubar_object_path (MetaWindow *window);
 
 META_EXPORT
+const char * meta_window_get_dbus_appmenu_service_name (MetaWindow *window);
+
+META_EXPORT
+const char * meta_window_get_dbus_appmenu_object_path (MetaWindow *window);
+
+META_EXPORT
 void meta_window_move_frame(MetaWindow *window, gboolean user_op, int root_x_nw, int root_y_nw);
 
 META_EXPORT

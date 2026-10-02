@@ -65,6 +65,7 @@
 #include "wayland/meta-wayland-tablet-manager.h"
 #include "wayland/meta-wayland-transaction.h"
 #include "wayland/meta-wayland-xdg-dialog.h"
+#include "wayland/meta-wayland-appmenu.h"
 #include "wayland/meta-wayland-xdg-foreign.h"
 #include "wayland/meta-wayland-xdg-session-manager.h"
 #include "wayland/meta-wayland-xdg-toplevel-tag.h"
@@ -1038,6 +1039,7 @@ meta_wayland_compositor_new (MetaContext *context)
   meta_wayland_idle_inhibit_init (compositor);
   meta_wayland_drm_syncobj_init (compositor);
   meta_wayland_init_xdg_wm_dialog (compositor);
+  meta_wayland_init_appmenu (compositor);
   meta_wayland_init_color_management (compositor);
   meta_wayland_xdg_session_management_init (compositor);
   meta_wayland_init_system_bell (compositor);
