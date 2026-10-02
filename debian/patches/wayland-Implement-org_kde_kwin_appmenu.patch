@@ -1,0 +1,533 @@
+From: Felipe Felix <felippe.felix98@gmail.com>
+Subject: wayland: Implement org_kde_kwin_appmenu
+ Chromium and Electron only export their menu bar over DBusMenu on Wayland
+ when the compositor has the org_kde_kwin_appmenu_manager global. Implement
+ the protocol and expose the menu's address on MetaWindow through the
+ dbus-appmenu-service-name and dbus-appmenu-object-path properties.
+Origin: other, https://github.com/felixefelip/mutter/tree/kde-appmenu
+Forwarded: no
+---
+diff --git a/src/core/window-private.h b/src/core/window-private.h
+index 0621cb0448..fef4c3da2e 100644
+--- a/src/core/window-private.h
++++ b/src/core/window-private.h
+@@ -268,6 +268,8 @@ struct _MetaWindow
+   char *gtk_window_object_path;
+   char *gtk_app_menu_object_path;
+   char *gtk_menubar_object_path;
++  char *dbus_appmenu_service_name;
++  char *dbus_appmenu_object_path;
+   char *a11y_dbus_name;
+   char *a11y_object_path;
+ 
+@@ -776,6 +778,9 @@ void meta_window_set_gtk_dbus_properties  (MetaWindow *window,
+                                            const char *menubar_path,
+                                            const char *application_object_path,
+                                            const char *window_object_path);
++void meta_window_set_dbus_appmenu         (MetaWindow *window,
++                                           const char *service_name,
++                                           const char *object_path);
+ 
+ gboolean meta_window_has_transient_type   (MetaWindow *window);
+ gboolean meta_window_has_modals           (MetaWindow *window);
+diff --git a/src/core/window.c b/src/core/window.c
+index bca6afd57e..6050a8f35e 100644
+--- a/src/core/window.c
++++ b/src/core/window.c
+@@ -226,6 +226,8 @@ enum
+   PROP_GTK_WINDOW_OBJECT_PATH,
+   PROP_GTK_APP_MENU_OBJECT_PATH,
+   PROP_GTK_MENUBAR_OBJECT_PATH,
++  PROP_DBUS_APPMENU_SERVICE_NAME,
++  PROP_DBUS_APPMENU_OBJECT_PATH,
+   PROP_ON_ALL_WORKSPACES,
+   PROP_IS_ALIVE,
+   PROP_DISPLAY,
+@@ -414,6 +416,8 @@ meta_window_finalize (GObject *object)
+   g_free (window->gtk_window_object_path);
+   g_free (window->gtk_app_menu_object_path);
+   g_free (window->gtk_menubar_object_path);
++  g_free (window->dbus_appmenu_service_name);
++  g_free (window->dbus_appmenu_object_path);
+   g_free (window->a11y_dbus_name);
+   g_free (window->a11y_object_path);
+   g_free (window->placement.rule);
+@@ -504,6 +508,12 @@ meta_window_get_property (GObject         *object,
+     case PROP_GTK_MENUBAR_OBJECT_PATH:
+       g_value_set_string (value, window->gtk_menubar_object_path);
+       break;
++    case PROP_DBUS_APPMENU_SERVICE_NAME:
++      g_value_set_string (value, window->dbus_appmenu_service_name);
++      break;
++    case PROP_DBUS_APPMENU_OBJECT_PATH:
++      g_value_set_string (value, window->dbus_appmenu_object_path);
++      break;
+     case PROP_ON_ALL_WORKSPACES:
+       g_value_set_boolean (value, window->on_all_workspaces);
+       break;
+@@ -672,6 +682,14 @@ meta_window_class_init (MetaWindowClass *klass)
+     g_param_spec_string ("gtk-menubar-object-path", NULL, NULL,
+                          NULL,
+                          G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
++  obj_props[PROP_DBUS_APPMENU_SERVICE_NAME] =
++    g_param_spec_string ("dbus-appmenu-service-name", NULL, NULL,
++                         NULL,
++                         G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
++  obj_props[PROP_DBUS_APPMENU_OBJECT_PATH] =
++    g_param_spec_string ("dbus-appmenu-object-path", NULL, NULL,
++                         NULL,
++                         G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+   obj_props[PROP_ON_ALL_WORKSPACES] =
+     g_param_spec_boolean ("on-all-workspaces", NULL, NULL,
+                           FALSE,
+@@ -7227,6 +7245,36 @@ meta_window_get_gtk_menubar_object_path (MetaWindow *window)
+   return window->gtk_menubar_object_path;
+ }
+ 
++/**
++ * meta_window_get_dbus_appmenu_service_name:
++ * @window: a #MetaWindow
++ *
++ * Gets the D-Bus service exporting the window's menu over
++ * com.canonical.dbusmenu, as announced through org_kde_kwin_appmenu.
++ *
++ * Returns: (transfer none) (nullable): the unique bus name
++ **/
++const char *
++meta_window_get_dbus_appmenu_service_name (MetaWindow *window)
++{
++  return window->dbus_appmenu_service_name;
++}
++
++/**
++ * meta_window_get_dbus_appmenu_object_path:
++ * @window: a #MetaWindow
++ *
++ * Gets the object path of the window's com.canonical.dbusmenu menu, as
++ * announced through org_kde_kwin_appmenu.
++ *
++ * Returns: (transfer none) (nullable): the object path
++ **/
++const char *
++meta_window_get_dbus_appmenu_object_path (MetaWindow *window)
++{
++  return window->dbus_appmenu_object_path;
++}
++
+ /**
+  * meta_window_get_compositor_private:
+  * @window: a #MetaWindow
+@@ -7831,6 +7879,32 @@ meta_window_set_gtk_dbus_properties (MetaWindow *window,
+   g_object_thaw_notify (G_OBJECT (window));
+ }
+ 
++void
++meta_window_set_dbus_appmenu (MetaWindow *window,
++                              const char *service_name,
++                              const char *object_path)
++{
++  g_object_freeze_notify (G_OBJECT (window));
++
++  if (g_strcmp0 (window->dbus_appmenu_service_name, service_name) != 0)
++    {
++      g_free (window->dbus_appmenu_service_name);
++      window->dbus_appmenu_service_name = g_strdup (service_name);
++      g_object_notify_by_pspec (G_OBJECT (window),
++                                obj_props[PROP_DBUS_APPMENU_SERVICE_NAME]);
++    }
++
++  if (g_strcmp0 (window->dbus_appmenu_object_path, object_path) != 0)
++    {
++      g_free (window->dbus_appmenu_object_path);
++      window->dbus_appmenu_object_path = g_strdup (object_path);
++      g_object_notify_by_pspec (G_OBJECT (window),
++                                obj_props[PROP_DBUS_APPMENU_OBJECT_PATH]);
++    }
++
++  g_object_thaw_notify (G_OBJECT (window));
++}
++
+ static gboolean
+ check_transient_for_loop (MetaWindow *window,
+                           MetaWindow *parent)
+diff --git a/src/meson.build b/src/meson.build
+index 04aef85771..8521574c71 100644
+--- a/src/meson.build
++++ b/src/meson.build
+@@ -528,6 +528,8 @@ mutter_sources += [
+   'wayland/meta-wayland-activation.h',
+   'wayland/meta-wayland-actor-surface.c',
+   'wayland/meta-wayland-actor-surface.h',
++  'wayland/meta-wayland-appmenu.c',
++  'wayland/meta-wayland-appmenu.h',
+   'wayland/meta-wayland-buffer.c',
+   'wayland/meta-wayland-buffer.h',
+   'wayland/meta-wayland.c',
+@@ -1055,6 +1057,7 @@ wayland_protocol_sources = []
+ #    * 'eglstreams' are from wayland-eglstream-protocols
+ #  - protocol version (optional for 'stable', 'staging' and 'unstable')
+ wayland_protocols = [
++  ['appmenu', 'private', ],
+   ['color-management', 'staging', 1, ],
+   ['color-representation', 'staging', 1, ],
+   ['commit-timing', 'staging', 1, ],
+diff --git a/src/meta/window.h b/src/meta/window.h
+index 761896b33e..646a488dda 100644
+--- a/src/meta/window.h
++++ b/src/meta/window.h
+@@ -203,6 +203,12 @@ const char * meta_window_get_gtk_app_menu_object_path (MetaWindow *window);
+ META_EXPORT
+ const char * meta_window_get_gtk_menubar_object_path (MetaWindow *window);
+ 
++META_EXPORT
++const char * meta_window_get_dbus_appmenu_service_name (MetaWindow *window);
++
++META_EXPORT
++const char * meta_window_get_dbus_appmenu_object_path (MetaWindow *window);
++
+ META_EXPORT
+ void meta_window_move_frame(MetaWindow *window, gboolean user_op, int root_x_nw, int root_y_nw);
+ 
+diff --git a/src/wayland/meta-wayland-appmenu.c b/src/wayland/meta-wayland-appmenu.c
+new file mode 100644
+index 0000000000..1db7a87af8
+--- /dev/null
++++ b/src/wayland/meta-wayland-appmenu.c
+@@ -0,0 +1,236 @@
++/*
++ * Wayland Support
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License as
++ * published by the Free Software Foundation; either version 2 of the
++ * License, or (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, see <http://www.gnu.org/licenses/>.
++ */
++
++/*
++ * Implements org_kde_kwin_appmenu, through which clients such as Chromium
++ * tell where the com.canonical.dbusmenu menu of a surface is exported. The
++ * address is exposed on the surface's MetaWindow for the shell to use.
++ */
++
++#include "config.h"
++
++#include "wayland/meta-wayland-appmenu.h"
++
++#include "core/window-private.h"
++#include "wayland/meta-wayland-private.h"
++#include "wayland/meta-wayland-surface-private.h"
++#include "wayland/meta-wayland-versions.h"
++
++#include "appmenu-server-protocol.h"
++
++typedef struct _MetaWaylandAppmenu
++{
++  struct wl_resource *resource;
++  MetaWaylandSurface *surface;
++  gulong destroy_handler_id;
++  gulong pre_state_applied_handler_id;
++
++  char *service_name;
++  char *object_path;
++} MetaWaylandAppmenu;
++
++struct _MetaWaylandAppmenuManager
++{
++  GObject parent;
++};
++
++#define META_TYPE_WAYLAND_APPMENU_MANAGER (meta_wayland_appmenu_manager_get_type ())
++G_DECLARE_FINAL_TYPE (MetaWaylandAppmenuManager, meta_wayland_appmenu_manager,
++                      META, WAYLAND_APPMENU_MANAGER, GObject)
++
++G_DEFINE_TYPE (MetaWaylandAppmenuManager, meta_wayland_appmenu_manager,
++               G_TYPE_OBJECT)
++
++static void
++appmenu_apply (MetaWaylandAppmenu *appmenu)
++{
++  MetaWindow *window;
++
++  if (!appmenu->surface)
++    return;
++
++  window = meta_wayland_surface_get_window (appmenu->surface);
++  if (!window)
++    return;
++
++  meta_window_set_dbus_appmenu (window,
++                                appmenu->service_name,
++                                appmenu->object_path);
++}
++
++static void
++appmenu_detach_surface (MetaWaylandAppmenu *appmenu)
++{
++  if (!appmenu->surface)
++    return;
++
++  g_clear_signal_handler (&appmenu->destroy_handler_id, appmenu->surface);
++  g_clear_signal_handler (&appmenu->pre_state_applied_handler_id,
++                          appmenu->surface);
++  appmenu->surface = NULL;
++}
++
++static void
++on_surface_destroyed (MetaWaylandSurface *surface,
++                      MetaWaylandAppmenu *appmenu)
++{
++  appmenu_detach_surface (appmenu);
++}
++
++/* The surface gets a new MetaWindow each time it is mapped again, so the
++ * address is carried over to whichever window the surface has now. */
++static void
++on_surface_pre_state_applied (MetaWaylandSurface *surface,
++                              MetaWaylandAppmenu *appmenu)
++{
++  MetaWindow *window = meta_wayland_surface_get_window (surface);
++
++  if (window &&
++      (g_strcmp0 (window->dbus_appmenu_service_name, appmenu->service_name) != 0 ||
++       g_strcmp0 (window->dbus_appmenu_object_path, appmenu->object_path) != 0))
++    appmenu_apply (appmenu);
++}
++
++static void
++appmenu_destructor (struct wl_resource *resource)
++{
++  MetaWaylandAppmenu *appmenu = wl_resource_get_user_data (resource);
++
++  /* Removing the object means the surface no longer has a menu. */
++  g_clear_pointer (&appmenu->service_name, g_free);
++  g_clear_pointer (&appmenu->object_path, g_free);
++  appmenu_apply (appmenu);
++
++  appmenu_detach_surface (appmenu);
++  g_free (appmenu);
++}
++
++static void
++appmenu_set_address (struct wl_client   *client,
++                     struct wl_resource *resource,
++                     const char         *service_name,
++                     const char         *object_path)
++{
++  MetaWaylandAppmenu *appmenu = wl_resource_get_user_data (resource);
++
++  g_free (appmenu->service_name);
++  appmenu->service_name = g_strdup (service_name);
++  g_free (appmenu->object_path);
++  appmenu->object_path = g_strdup (object_path);
++
++  appmenu_apply (appmenu);
++}
++
++static void
++appmenu_release (struct wl_client   *client,
++                 struct wl_resource *resource)
++{
++  wl_resource_destroy (resource);
++}
++
++static const struct org_kde_kwin_appmenu_interface meta_wayland_appmenu_interface = {
++  appmenu_set_address,
++  appmenu_release,
++};
++
++static void
++appmenu_manager_create (struct wl_client   *client,
++                        struct wl_resource *resource,
++                        uint32_t            id,
++                        struct wl_resource *surface_resource)
++{
++  MetaWaylandSurface *surface = wl_resource_get_user_data (surface_resource);
++  MetaWaylandAppmenu *appmenu;
++
++  appmenu = g_new0 (MetaWaylandAppmenu, 1);
++  appmenu->surface = surface;
++  appmenu->resource = wl_resource_create (client,
++                                          &org_kde_kwin_appmenu_interface,
++                                          wl_resource_get_version (resource),
++                                          id);
++  wl_resource_set_implementation (appmenu->resource,
++                                  &meta_wayland_appmenu_interface,
++                                  appmenu, appmenu_destructor);
++
++  appmenu->destroy_handler_id =
++    g_signal_connect (surface, "destroy",
++                      G_CALLBACK (on_surface_destroyed), appmenu);
++  appmenu->pre_state_applied_handler_id =
++    g_signal_connect (surface, "pre-state-applied",
++                      G_CALLBACK (on_surface_pre_state_applied), appmenu);
++}
++
++static void
++appmenu_manager_release (struct wl_client   *client,
++                         struct wl_resource *resource)
++{
++  wl_resource_destroy (resource);
++}
++
++static const struct org_kde_kwin_appmenu_manager_interface meta_wayland_appmenu_manager_interface = {
++  appmenu_manager_create,
++  appmenu_manager_release,
++};
++
++static void
++bind_appmenu_manager (struct wl_client *client,
++                      void             *data,
++                      uint32_t          version,
++                      uint32_t          id)
++{
++  struct wl_resource *resource;
++
++  resource = wl_resource_create (client, &org_kde_kwin_appmenu_manager_interface,
++                                 version, id);
++  wl_resource_set_implementation (resource,
++                                  &meta_wayland_appmenu_manager_interface,
++                                  data, NULL);
++}
++
++static void
++meta_wayland_appmenu_manager_init (MetaWaylandAppmenuManager *appmenu_manager)
++{
++}
++
++static void
++meta_wayland_appmenu_manager_class_init (MetaWaylandAppmenuManagerClass *klass)
++{
++}
++
++static MetaWaylandAppmenuManager *
++meta_wayland_appmenu_manager_new (MetaWaylandCompositor *compositor)
++{
++  MetaWaylandAppmenuManager *appmenu_manager;
++
++  appmenu_manager = g_object_new (META_TYPE_WAYLAND_APPMENU_MANAGER, NULL);
++
++  if (wl_global_create (compositor->wayland_display,
++                        &org_kde_kwin_appmenu_manager_interface,
++                        META_ORG_KDE_KWIN_APPMENU_MANAGER_VERSION,
++                        appmenu_manager, bind_appmenu_manager) == NULL)
++    g_error ("Failed to register a global org_kde_kwin_appmenu_manager object");
++
++  return appmenu_manager;
++}
++
++void
++meta_wayland_init_appmenu (MetaWaylandCompositor *compositor)
++{
++  g_object_set_data_full (G_OBJECT (compositor), "-meta-wayland-appmenu-manager",
++                          meta_wayland_appmenu_manager_new (compositor),
++                          g_object_unref);
++}
+diff --git a/src/wayland/meta-wayland-appmenu.h b/src/wayland/meta-wayland-appmenu.h
+new file mode 100644
+index 0000000000..9abd909656
+--- /dev/null
++++ b/src/wayland/meta-wayland-appmenu.h
+@@ -0,0 +1,20 @@
++/*
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License as
++ * published by the Free Software Foundation; either version 2 of the
++ * License, or (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, see <http://www.gnu.org/licenses/>.
++ */
++
++#pragma once
++
++#include "wayland/meta-wayland.h"
++
++void meta_wayland_init_appmenu (MetaWaylandCompositor *compositor);
+diff --git a/src/wayland/meta-wayland-versions.h b/src/wayland/meta-wayland-versions.h
+index bf87d1feff..d2aa9ac494 100644
+--- a/src/wayland/meta-wayland-versions.h
++++ b/src/wayland/meta-wayland-versions.h
+@@ -70,3 +70,4 @@
+ #define META_WP_COLOR_REPRESENTATION_VERSION 1
+ #define META_WL_FIXES_VERSION 1
+ #define META_WP_POINTER_WARP_VERSION 1
++#define META_ORG_KDE_KWIN_APPMENU_MANAGER_VERSION 2
+diff --git a/src/wayland/meta-wayland.c b/src/wayland/meta-wayland.c
+index cc303d3648..ed97c68975 100644
+--- a/src/wayland/meta-wayland.c
++++ b/src/wayland/meta-wayland.c
+@@ -65,6 +65,7 @@
+ #include "wayland/meta-wayland-tablet-manager.h"
+ #include "wayland/meta-wayland-transaction.h"
+ #include "wayland/meta-wayland-xdg-dialog.h"
++#include "wayland/meta-wayland-appmenu.h"
+ #include "wayland/meta-wayland-xdg-foreign.h"
+ #include "wayland/meta-wayland-xdg-session-manager.h"
+ #include "wayland/meta-wayland-xdg-toplevel-tag.h"
+@@ -1038,6 +1039,7 @@ meta_wayland_compositor_new (MetaContext *context)
+   meta_wayland_idle_inhibit_init (compositor);
+   meta_wayland_drm_syncobj_init (compositor);
+   meta_wayland_init_xdg_wm_dialog (compositor);
++  meta_wayland_init_appmenu (compositor);
+   meta_wayland_init_color_management (compositor);
+   meta_wayland_xdg_session_management_init (compositor);
+   meta_wayland_init_system_bell (compositor);
+diff --git a/src/wayland/protocol/appmenu.xml b/src/wayland/protocol/appmenu.xml
+new file mode 100644
+index 0000000000..02a72f7ef4
+--- /dev/null
++++ b/src/wayland/protocol/appmenu.xml
+@@ -0,0 +1,40 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<protocol name="appmenu">
++  <copyright><![CDATA[
++    SPDX-FileCopyrightText: 2017 David Edmundson
++
++    SPDX-License-Identifier: MIT
++  ]]></copyright>
++  <interface name="org_kde_kwin_appmenu_manager" version="2">
++      <description summary="appmenu dbus address interface">
++          This interface allows a client to link a window (or wl_surface) to an com.canonical.dbusmenu
++          interface registered on DBus.
++      </description>
++      <request name="create">
++          <arg name="id" type="new_id" interface="org_kde_kwin_appmenu"/>
++          <arg name="surface" type="object" interface="wl_surface"/>
++      </request>
++      <!-- version 2 additions-->
++      <request name="release" type="destructor" since="2">
++          <description summary="destroy the org_kde_kwin_appmenu_manager object" />
++      </request>
++  </interface>
++  <interface name="org_kde_kwin_appmenu" version="2">
++      <description summary="appmenu dbus address interface">
++          The DBus service name and object path where the appmenu interface is present
++          The object should be registered on the session bus before sending this request.
++          If not applicable, clients should remove this object.
++      </description>
++      <request name="set_address">
++          <description summary="initialise or update the location of the AppMenu interface">
++              Set or update the service name and object path.
++              Strings should be formatted in Latin-1 matching the relevant DBus specifications.
++          </description>
++          <arg name="service_name" type="string" />
++          <arg name="object_path" type="string" />
++      </request>
++      <request name="release" type="destructor">
++        <description summary="release the appmenu object"/>
++      </request>
++  </interface>
++</protocol>

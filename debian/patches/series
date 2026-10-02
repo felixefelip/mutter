@@ -28,3 +28,4 @@ ubuntu/output-kms-Filter-fallback-modes-by-panel-supported-refre.patch
 ubuntu/backends-monitor-manager-Fix-auto-rotate-on-phones-without.patch
 ubuntu/tests-monitor-orientation-Add-auto-rotate-test-for-phones.patch
 ubuntu/backends-native-Increase-fallback-mode-refresh-rate-toler.patch
+wayland-Implement-org_kde_kwin_appmenu.patch

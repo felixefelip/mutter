@@ -1,3 +1,11 @@
+mutter (50.1-0ubuntu2.4+appmenu1) resolute; urgency=medium
+
+  * Add wayland-Implement-org_kde_kwin_appmenu.patch: implement the
+    org_kde_kwin_appmenu protocol so Chromium and Electron apps export their
+    menu bar on Wayland, for global menus.
+
+ -- Felipe Felix <felippe.felix98@gmail.com>  Fri, 02 Oct 2026 01:09:24 -0300
+
 mutter (50.1-0ubuntu2.4) resolute; urgency=medium
 
   [ Thomas Chen ]

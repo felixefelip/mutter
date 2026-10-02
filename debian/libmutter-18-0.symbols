@@ -848,6 +848,8 @@ libmutter-18.so.0 libmutter-18-0 #MINVER#
  meta_window_get_client_content_rect@Base 47.3
  meta_window_get_client_type@Base 43.0
  meta_window_get_compositor_private@Base 43.0
+ meta_window_get_dbus_appmenu_object_path@Base 50.1-0ubuntu2.4+appmenu1
+ meta_window_get_dbus_appmenu_service_name@Base 50.1-0ubuntu2.4+appmenu1
  meta_window_get_description@Base 43.0
  meta_window_get_display@Base 43.0
  meta_window_get_frame_rect@Base 43.0
