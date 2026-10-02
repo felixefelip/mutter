@@ -220,6 +220,8 @@ enum
   PROP_GTK_WINDOW_OBJECT_PATH,
   PROP_GTK_APP_MENU_OBJECT_PATH,
   PROP_GTK_MENUBAR_OBJECT_PATH,
+  PROP_DBUS_APPMENU_SERVICE_NAME,
+  PROP_DBUS_APPMENU_OBJECT_PATH,
   PROP_ON_ALL_WORKSPACES,
   PROP_IS_ALIVE,
   PROP_DISPLAY,
@@ -408,6 +410,8 @@ meta_window_finalize (GObject *object)
   g_free (window->gtk_window_object_path);
   g_free (window->gtk_app_menu_object_path);
   g_free (window->gtk_menubar_object_path);
+  g_free (window->dbus_appmenu_service_name);
+  g_free (window->dbus_appmenu_object_path);
   g_free (window->a11y_dbus_name);
   g_free (window->a11y_object_path);
   g_free (window->placement.rule);
@@ -497,6 +501,12 @@ meta_window_get_property (GObject         *object,
       break;
     case PROP_GTK_MENUBAR_OBJECT_PATH:
       g_value_set_string (value, window->gtk_menubar_object_path);
+      break;
+    case PROP_DBUS_APPMENU_SERVICE_NAME:
+      g_value_set_string (value, window->dbus_appmenu_service_name);
+      break;
+    case PROP_DBUS_APPMENU_OBJECT_PATH:
+      g_value_set_string (value, window->dbus_appmenu_object_path);
       break;
     case PROP_ON_ALL_WORKSPACES:
       g_value_set_boolean (value, window->on_all_workspaces);
@@ -664,6 +674,14 @@ meta_window_class_init (MetaWindowClass *klass)
                          G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
   obj_props[PROP_GTK_MENUBAR_OBJECT_PATH] =
     g_param_spec_string ("gtk-menubar-object-path", NULL, NULL,
+                         NULL,
+                         G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+  obj_props[PROP_DBUS_APPMENU_SERVICE_NAME] =
+    g_param_spec_string ("dbus-appmenu-service-name", NULL, NULL,
+                         NULL,
+                         G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
+  obj_props[PROP_DBUS_APPMENU_OBJECT_PATH] =
+    g_param_spec_string ("dbus-appmenu-object-path", NULL, NULL,
                          NULL,
                          G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
   obj_props[PROP_ON_ALL_WORKSPACES] =
@@ -6921,6 +6939,36 @@ meta_window_get_gtk_menubar_object_path (MetaWindow *window)
 }
 
 /**
+ * meta_window_get_dbus_appmenu_service_name:
+ * @window: a #MetaWindow
+ *
+ * Gets the D-Bus service exporting the window's menu over
+ * com.canonical.dbusmenu, as announced through org_kde_kwin_appmenu.
+ *
+ * Returns: (transfer none) (nullable): the unique bus name
+ **/
+const char *
+meta_window_get_dbus_appmenu_service_name (MetaWindow *window)
+{
+  return window->dbus_appmenu_service_name;
+}
+
+/**
+ * meta_window_get_dbus_appmenu_object_path:
+ * @window: a #MetaWindow
+ *
+ * Gets the object path of the window's com.canonical.dbusmenu menu, as
+ * announced through org_kde_kwin_appmenu.
+ *
+ * Returns: (transfer none) (nullable): the object path
+ **/
+const char *
+meta_window_get_dbus_appmenu_object_path (MetaWindow *window)
+{
+  return window->dbus_appmenu_object_path;
+}
+
+/**
  * meta_window_get_compositor_private:
  * @window: a #MetaWindow
  *
@@ -7520,6 +7568,32 @@ meta_window_set_gtk_dbus_properties (MetaWindow *window,
   g_free (window->gtk_window_object_path);
   window->gtk_window_object_path = g_strdup (window_object_path);
   g_object_notify_by_pspec (G_OBJECT (window), obj_props[PROP_GTK_WINDOW_OBJECT_PATH]);
+
+  g_object_thaw_notify (G_OBJECT (window));
+}
+
+void
+meta_window_set_dbus_appmenu (MetaWindow *window,
+                              const char *service_name,
+                              const char *object_path)
+{
+  g_object_freeze_notify (G_OBJECT (window));
+
+  if (g_strcmp0 (window->dbus_appmenu_service_name, service_name) != 0)
+    {
+      g_free (window->dbus_appmenu_service_name);
+      window->dbus_appmenu_service_name = g_strdup (service_name);
+      g_object_notify_by_pspec (G_OBJECT (window),
+                                obj_props[PROP_DBUS_APPMENU_SERVICE_NAME]);
+    }
+
+  if (g_strcmp0 (window->dbus_appmenu_object_path, object_path) != 0)
+    {
+      g_free (window->dbus_appmenu_object_path);
+      window->dbus_appmenu_object_path = g_strdup (object_path);
+      g_object_notify_by_pspec (G_OBJECT (window),
+                                obj_props[PROP_DBUS_APPMENU_OBJECT_PATH]);
+    }
 
   g_object_thaw_notify (G_OBJECT (window));
 }
